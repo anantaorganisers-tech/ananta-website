@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -15,12 +13,11 @@ class SecretariatApplicationFormScreen extends StatefulWidget {
 class _SecretariatApplicationFormScreenState
     extends State<SecretariatApplicationFormScreen> {
   static const String _googleAppsScriptUrl =
-      'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL';
+      'https://script.google.com/macros/s/AKfycbyyMgKYBHSnr5-Ct45EZhaWUiOQPRCKQ73AfmrqY5qQa9nE8gVLmM3pk30hlvB0jq4U/exec';
 
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
-  final _classController = TextEditingController();
   final _schoolController = TextEditingController();
   final _contactController = TextEditingController();
   final _emailController = TextEditingController();
@@ -31,7 +28,14 @@ class _SecretariatApplicationFormScreenState
   final _referralController = TextEditingController();
 
   bool _isSubmitting = false;
+  String? _selectedClass;
   String _selectedDepartment = 'Marketing Department';
+  static const List<String> _classOptions = [
+    'Class 9',
+    'Class 10',
+    'Class 11',
+    'Class 12',
+  ];
 
   static const List<DepartmentOption> _departments = [
     DepartmentOption(
@@ -64,7 +68,6 @@ class _SecretariatApplicationFormScreenState
   @override
   void dispose() {
     _nameController.dispose();
-    _classController.dispose();
     _schoolController.dispose();
     _contactController.dispose();
     _emailController.dispose();
@@ -80,7 +83,7 @@ class _SecretariatApplicationFormScreenState
     return {
       'submittedAt': DateTime.now().toIso8601String(),
       'name': _nameController.text.trim(),
-      'studentClass': _classController.text.trim(),
+      'studentClass': _selectedClass ?? '',
       'school': _schoolController.text.trim(),
       'contactNumber': _contactController.text.trim(),
       'emailAddress': _emailController.text.trim(),
@@ -96,7 +99,6 @@ class _SecretariatApplicationFormScreenState
   void _clearForm() {
     _formKey.currentState?.reset();
     _nameController.clear();
-    _classController.clear();
     _schoolController.clear();
     _contactController.clear();
     _emailController.clear();
@@ -106,6 +108,7 @@ class _SecretariatApplicationFormScreenState
     _timeController.clear();
     _referralController.clear();
     setState(() {
+      _selectedClass = null;
       _selectedDepartment = 'Marketing Department';
     });
   }
@@ -135,8 +138,7 @@ class _SecretariatApplicationFormScreenState
     try {
       final response = await http.post(
         Uri.parse(_googleAppsScriptUrl),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode(_buildPayload()),
+        body: _buildPayload(),
       );
 
       if (!mounted) {
@@ -220,11 +222,15 @@ class _SecretariatApplicationFormScreenState
                             controller: _nameController,
                           ),
                           SizedBox(height: formSpacing),
-                          TwoColumnRowBlock(
-                            leftLabel: 'Class',
-                            rightLabel: 'School',
-                            leftController: _classController,
-                            rightController: _schoolController,
+                          ClassSchoolRowBlock(
+                            selectedClass: _selectedClass,
+                            classOptions: _classOptions,
+                            onClassChanged: (value) {
+                              setState(() {
+                                _selectedClass = value;
+                              });
+                            },
+                            schoolController: _schoolController,
                           ),
                           SizedBox(height: formSpacing),
                           TwoColumnRowBlock(
@@ -567,6 +573,77 @@ class TextInputBlock extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class ClassSchoolRowBlock extends StatelessWidget {
+  const ClassSchoolRowBlock({
+    super.key,
+    required this.selectedClass,
+    required this.classOptions,
+    required this.onClassChanged,
+    required this.schoolController,
+  });
+
+  final String? selectedClass;
+  final List<String> classOptions;
+  final ValueChanged<String?> onClassChanged;
+  final TextEditingController schoolController;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final stacked = width < 900;
+    final compact = width < 600;
+
+    final classField = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SectionLabel(label: 'Class'),
+        const SizedBox(height: 14),
+        AppDropdownField(
+          value: selectedClass,
+          items: classOptions,
+          onChanged: onClassChanged,
+        ),
+      ],
+    );
+
+    final schoolField = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SectionLabel(label: 'School'),
+        const SizedBox(height: 14),
+        AppTextField(controller: schoolController),
+      ],
+    );
+
+    return SectionCard(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 14 : 24,
+        vertical: compact ? 16 : 22,
+      ),
+      child: stacked
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                classField,
+                SizedBox(height: compact ? 16 : 18),
+                schoolField,
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: classField),
+                const SizedBox(width: 22),
+                Expanded(child: schoolField),
+              ],
+            ),
     );
   }
 }
@@ -973,6 +1050,90 @@ class AppTextField extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
+    );
+  }
+}
+
+class AppDropdownField extends StatelessWidget {
+  const AppDropdownField({
+    super.key,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String? value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 600;
+
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      isExpanded: true,
+      dropdownColor: AppColors.cardBackground,
+      iconEnabledColor: AppColors.textPrimary,
+      style: TextStyle(
+        color: AppColors.textPrimary,
+        fontSize: compact ? 14 : 15,
+        fontWeight: FontWeight.w500,
+        height: 1.45,
+      ),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.inputFill,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: compact ? 16 : 18,
+          vertical: compact ? 14 : 16,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(
+            color: AppColors.border.withValues(alpha: 0.72),
+            width: 1.1,
+          ),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderSide: BorderSide(color: AppColors.border, width: 1.4),
+        ),
+        errorBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderSide: BorderSide(color: Color(0xFFE0A8A8), width: 1.2),
+        ),
+        focusedErrorBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderSide: BorderSide(color: Color(0xFFFFC4C4), width: 1.4),
+        ),
+        errorStyle: const TextStyle(
+          color: Color(0xFFF7D9D9),
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      hint: Text(
+        'Select Class',
+        style: TextStyle(
+          color: AppColors.textMuted.withValues(alpha: 0.9),
+          fontSize: compact ? 14 : 15,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      items: items
+          .map(
+            (item) => DropdownMenuItem<String>(value: item, child: Text(item)),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Please select a class';
+        }
+        return null;
+      },
     );
   }
 }

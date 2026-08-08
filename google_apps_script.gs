@@ -1,8 +1,8 @@
-const SHEET_NAME = 'Secretariat Applications';
+const SHEET_NAME = 'Applications';
 
 function doPost(e) {
   try {
-    const payload = JSON.parse(e.postData.contents || '{}');
+    const payload = parsePayload_(e);
     const sheet = getOrCreateSheet_();
 
     if (sheet.getLastRow() === 0) {
@@ -52,6 +52,41 @@ function doPost(e) {
 
 function getOrCreateSheet_() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const activeSheet = spreadsheet.getActiveSheet();
   const existing = spreadsheet.getSheetByName(SHEET_NAME);
-  return existing || spreadsheet.insertSheet(SHEET_NAME);
+  if (existing) {
+    return existing;
+  }
+  if (activeSheet) {
+    activeSheet.setName(SHEET_NAME);
+    return activeSheet;
+  }
+  return spreadsheet.insertSheet(SHEET_NAME);
+}
+
+function parsePayload_(e) {
+  const postData = e && e.postData ? e.postData : null;
+  const rawBody = postData && postData.contents ? postData.contents : '';
+  const mimeType = postData && postData.type ? postData.type : '';
+
+  if (mimeType.indexOf('application/json') !== -1 && rawBody) {
+    return JSON.parse(rawBody);
+  }
+
+  const params = e && e.parameter ? e.parameter : {};
+
+  return {
+    submittedAt: params.submittedAt || '',
+    name: params.name || '',
+    studentClass: params.studentClass || '',
+    school: params.school || '',
+    contactNumber: params.contactNumber || '',
+    emailAddress: params.emailAddress || '',
+    address: params.address || '',
+    pastExperience: params.pastExperience || '',
+    skillsets: params.skillsets || '',
+    timeContribution: params.timeContribution || '',
+    preferredDepartment: params.preferredDepartment || '',
+    referralName: params.referralName || '',
+  };
 }
