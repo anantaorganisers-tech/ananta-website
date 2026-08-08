@@ -1,3 +1,3 @@
 # ananta_website
 
-A new Flutter project.
+Repository to host website
