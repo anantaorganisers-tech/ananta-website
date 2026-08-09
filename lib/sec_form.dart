@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
@@ -179,6 +180,17 @@ class _SecretariatApplicationFormScreenState
     }
   }
 
+  String? _validateContactNumber(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return 'This field is required';
+    }
+    if (!RegExp(r'^\d{10}$').hasMatch(trimmed)) {
+      return 'Enter a valid 10-digit number';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
@@ -239,6 +251,11 @@ class _SecretariatApplicationFormScreenState
                             leftController: _contactController,
                             rightController: _emailController,
                             leftKeyboardType: TextInputType.phone,
+                            leftInputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
+                            leftValidator: _validateContactNumber,
                             rightKeyboardType: TextInputType.emailAddress,
                           ),
                           SizedBox(height: formSpacing),
@@ -281,7 +298,7 @@ class _SecretariatApplicationFormScreenState
                           ),
                           SizedBox(height: formSpacing),
                           TextInputBlock(
-                            label: 'Referral name from Team Rangaksh',
+                            label: 'Referral Name from Team Rangaksh',
                             controller: _referralController,
                           ),
                           SizedBox(height: width < 600 ? 24 : 28),
@@ -392,11 +409,16 @@ class _HeaderBrand extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isMobile = width < 600;
+    final logoWidth = isMobile
+        ? 32.0
+        : width < 900
+        ? 56.0
+        : 50.0;
     final logoHeight = isMobile
         ? 36.0
         : width < 900
-        ? 40.0
-        : 44.0;
+        ? 62.0
+        : 60.0;
     final fontSize = isMobile
         ? 13.5
         : width < 900
@@ -412,19 +434,19 @@ class _HeaderBrand extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(
+        Image.asset(
+          'lib/assets/logo.png',
+          width: logoWidth,
           height: logoHeight,
-          child: Image.asset(
-            'lib/assets/logo.png',
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.high,
-          ),
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+          isAntiAlias: true,
         ),
         SizedBox(width: isMobile ? 8 : 12),
         Flexible(
           child: Text(
             'ANANTA ORGANIZERS',
-            style: TextStyle(
+            style: GoogleFonts.montserrat(
               color: AppColors.textPrimary,
               fontSize: fontSize,
               fontWeight: FontWeight.w500,
@@ -467,7 +489,7 @@ class _HeaderTitleBlock extends StatelessWidget {
         Text(
           'SECRETARIAT APPLICATION FORM',
           textAlign: textAlign,
-          style: TextStyle(
+          style: GoogleFonts.montserrat(
             color: AppColors.textPrimary,
             fontSize: titleFontSize,
             fontWeight: FontWeight.w700,
@@ -482,7 +504,7 @@ class _HeaderTitleBlock extends StatelessWidget {
           child: Text(
             'Join us behind the curtain and be a part of Rangaksh’s Organising team',
             textAlign: textAlign,
-            style: TextStyle(
+            style: GoogleFonts.montserrat(
               color: AppColors.textMuted,
               fontSize: subtitleFontSize,
               fontWeight: FontWeight.w500,
@@ -657,6 +679,10 @@ class TwoColumnRowBlock extends StatelessWidget {
     required this.rightController,
     this.leftKeyboardType,
     this.rightKeyboardType,
+    this.leftInputFormatters,
+    this.rightInputFormatters,
+    this.leftValidator,
+    this.rightValidator,
   });
 
   final String leftLabel;
@@ -665,6 +691,10 @@ class TwoColumnRowBlock extends StatelessWidget {
   final TextEditingController rightController;
   final TextInputType? leftKeyboardType;
   final TextInputType? rightKeyboardType;
+  final List<TextInputFormatter>? leftInputFormatters;
+  final List<TextInputFormatter>? rightInputFormatters;
+  final String? Function(String?)? leftValidator;
+  final String? Function(String?)? rightValidator;
 
   @override
   Widget build(BuildContext context) {
@@ -676,6 +706,8 @@ class TwoColumnRowBlock extends StatelessWidget {
       required String label,
       required TextEditingController controller,
       required TextInputType? keyboardType,
+      List<TextInputFormatter>? inputFormatters,
+      String? Function(String?)? validator,
     }) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,7 +715,12 @@ class TwoColumnRowBlock extends StatelessWidget {
         children: [
           SectionLabel(label: label),
           const SizedBox(height: 14),
-          AppTextField(controller: controller, keyboardType: keyboardType),
+          AppTextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            validator: validator,
+          ),
         ],
       );
     }
@@ -692,12 +729,16 @@ class TwoColumnRowBlock extends StatelessWidget {
       label: leftLabel,
       controller: leftController,
       keyboardType: leftKeyboardType,
+      inputFormatters: leftInputFormatters,
+      validator: leftValidator,
     );
 
     final rightField = buildField(
       label: rightLabel,
       controller: rightController,
       keyboardType: rightKeyboardType,
+      inputFormatters: rightInputFormatters,
+      validator: rightValidator,
     );
 
     return SectionCard(
@@ -754,11 +795,11 @@ class PreferredDepartmentBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 2),
+            padding: const EdgeInsets.only(left: 2, bottom: 5),
             child: SectionLabel(
               label: 'Preferred Department',
-              fontSize: compact ? 16 : 17,
-              fontWeight: FontWeight.w500,
+              fontSize: compact ? 16 : 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
           SizedBox(height: compact ? 14 : 18),
@@ -913,9 +954,10 @@ class SubmitButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 600;
-    return Center(
+    return Align(
+      alignment: Alignment.centerRight,
       child: SizedBox(
-        width: compact ? double.infinity : 300,
+        width: compact ? double.infinity : 200,
         height: compact ? 58 : 68,
         child: OutlinedButton(
           onPressed: onPressed,
@@ -928,8 +970,8 @@ class SubmitButton extends StatelessWidget {
             ),
             elevation: 0,
             shadowColor: Colors.transparent,
-            textStyle: GoogleFonts.montserrat(
-              fontSize: compact ? 14 : 16,
+            textStyle: GoogleFonts.baloo2(
+              fontSize: compact ? 14 : 24,
               fontWeight: FontWeight.w700,
               letterSpacing: compact ? 2.8 : 4.4,
             ),
@@ -945,7 +987,21 @@ class SubmitButton extends StatelessWidget {
                     ),
                   ),
                 )
-              : const Text('SUBMIT'),
+              : FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('SUBMIT'),
+                      SizedBox(width: compact ? 8 : 12),
+                      Icon(
+                        Icons.keyboard_arrow_right_rounded,
+                        size: compact ? 28 : 40,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ),
         ),
       ),
     );
@@ -956,7 +1012,7 @@ class SectionLabel extends StatelessWidget {
   const SectionLabel({
     super.key,
     required this.label,
-    this.fontSize = 20,
+    this.fontSize = 24,
     this.fontWeight = FontWeight.w700,
   });
 
@@ -986,11 +1042,15 @@ class AppTextField extends StatelessWidget {
     required this.controller,
     this.keyboardType,
     this.maxLines = 1,
+    this.inputFormatters,
+    this.validator,
   });
 
   final TextEditingController controller;
   final TextInputType? keyboardType;
   final int maxLines;
+  final List<TextInputFormatter>? inputFormatters;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -1000,24 +1060,27 @@ class AppTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      inputFormatters: inputFormatters,
       style: TextStyle(
         color: AppColors.textPrimary,
         fontSize: compact ? 14 : 15,
         fontWeight: FontWeight.w500,
         height: 1.45,
       ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'This field is required';
-        }
-        if (keyboardType == TextInputType.emailAddress) {
-          final email = value.trim();
-          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-            return 'Enter a valid email address';
-          }
-        }
-        return null;
-      },
+      validator:
+          validator ??
+          (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'This field is required';
+            }
+            if (keyboardType == TextInputType.emailAddress) {
+              final email = value.trim();
+              if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                return 'Enter a valid email address';
+              }
+            }
+            return null;
+          },
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.inputFill,
@@ -1146,9 +1209,9 @@ class DepartmentOption {
 }
 
 class AppColors {
-  static const Color pageBackground = Color(0xFF49161A);
+  static const Color pageBackground = Color(0xFF5A1725);
   static const Color headerBackground = Color(0xFF530C1F);
-  static const Color cardBackground = Color(0xFF5A1D21);
+  static const Color cardBackground = Color(0xFF5A1725);
   static const Color buttonBackground = Color(0xFF220C0F);
   static const Color border = Color(0xFFE1C28B);
   static const Color textPrimary = Color(0xFFFFF3DE);

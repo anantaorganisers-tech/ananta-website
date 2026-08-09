@@ -17,7 +17,8 @@ class MainApp extends StatelessWidget {
       title: 'Secretariat Application Form',
       theme: ThemeData(
         useMaterial3: true,
-        textTheme: GoogleFonts.montserratTextTheme(),
+        textTheme: GoogleFonts.baloo2TextTheme(),
+        colorSchemeSeed: AppColors.textPrimary,
         scaffoldBackgroundColor: AppColors.pageBackground,
       ),
       home: const SecretariatApplicationFormScreen(),
