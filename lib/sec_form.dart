@@ -114,6 +114,65 @@ class _SecretariatApplicationFormScreenState
     });
   }
 
+  Future<void> _showSuccessDialogAndReload() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.cardBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: AppColors.border, width: 1),
+          ),
+          title: Text(
+            'Application Submitted Successfully',
+            style: GoogleFonts.baloo2(
+              color: AppColors.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'Your response has been recorded.',
+            style: GoogleFonts.baloo2(
+              color: AppColors.textMuted,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text(
+                'OK',
+                style: GoogleFonts.baloo2(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (_, _, _) => const SecretariatApplicationFormScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
@@ -148,9 +207,7 @@ class _SecretariatApplicationFormScreenState
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         _clearForm();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Application submitted successfully.')),
-        );
+        await _showSuccessDialogAndReload();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
