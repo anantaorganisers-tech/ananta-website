@@ -21,7 +21,7 @@ class MainApp extends StatelessWidget {
         colorSchemeSeed: AppColors.textPrimary,
         scaffoldBackgroundColor: AppColors.pageBackground,
       ),
-      home: const SecForm(),
+      home: const SecretariatApplicationFormScreen(),
     );
   }
 }
