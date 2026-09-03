@@ -9,8 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
   google_fonts: ^6.3.1
   http: ^1.5.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -20,4 +23,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - lib/assets/logo.png
+    - lib/assets/
+    - lib/assets/ananta_portf/
+    - lib/assets/theme_cards/
+    - lib/assets/sponsor_visibility/

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
+import 'one_act_page.dart';
+
 class SecretariatApplicationFormScreen extends StatefulWidget {
   const SecretariatApplicationFormScreen({super.key});
 
@@ -254,124 +256,176 @@ class _SecretariatApplicationFormScreenState
     final isMobile = width < 600;
     final isTablet = width >= 600 && width < 1024;
     final horizontalPadding = isMobile
-        ? 12.0
+        ? 20.0
         : isTablet
         ? 20.0
         : width >= 1200
         ? 40.0
         : 28.0;
-    final formSpacing = isMobile
-        ? 30.0
-        : isTablet
-        ? 16.0
-        : 50.0;
+    final formSpacing = isMobile ? 28.0 : 32.0;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const FormHeader(),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  isMobile ? 16 : 24,
-                  horizontalPadding,
-                  isMobile ? 28 : 40,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1040),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          TextInputBlock(
-                            label: 'Name',
-                            controller: _nameController,
-                          ),
-                          SizedBox(height: formSpacing),
-                          ClassSchoolRowBlock(
-                            selectedClass: _selectedClass,
-                            classOptions: _classOptions,
-                            onClassChanged: (value) {
-                              setState(() {
-                                _selectedClass = value;
-                              });
-                            },
-                            schoolController: _schoolController,
-                          ),
-                          SizedBox(height: formSpacing),
-                          TwoColumnRowBlock(
-                            leftLabel: 'Contact Number',
-                            rightLabel: 'E-Mail Address',
-                            leftController: _contactController,
-                            rightController: _emailController,
-                            leftKeyboardType: TextInputType.phone,
-                            leftInputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(10),
-                            ],
-                            leftValidator: _validateContactNumber,
-                            rightKeyboardType: TextInputType.emailAddress,
-                          ),
-                          SizedBox(height: formSpacing),
-                          TextInputBlock(
-                            label: 'Address',
-                            controller: _addressController,
-                            maxLines: 3,
-                          ),
-                          SizedBox(height: formSpacing),
-                          TextInputBlock(
-                            label: 'Past Experience (If Any)',
-                            controller: _experienceController,
-                            maxLines: 4,
-                          ),
-                          SizedBox(height: formSpacing),
-                          TextInputBlock(
-                            label: 'A Short Description of your Skillsets',
-                            controller: _skillsetsController,
-                            maxLines: 4,
-                          ),
-                          SizedBox(height: formSpacing),
-                          TextInputBlock(
-                            label:
-                                'How much time can you contribute to Rangaksh?',
-                            controller: _timeController,
-                            maxLines: 3,
-                          ),
-                          SizedBox(height: formSpacing),
-                          PreferredDepartmentBlock(
-                            options: _departments,
-                            selectedValue: _selectedDepartment,
-                            onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-                              setState(() {
-                                _selectedDepartment = value;
-                              });
-                            },
-                          ),
-                          SizedBox(height: formSpacing),
-                          TextInputBlock(
-                            label: 'Referral Name from Team Rangaksh',
-                            controller: _referralController,
-                          ),
-                          SizedBox(height: width < 600 ? 24 : 28),
-                          SubmitButton(
-                            onPressed: _isSubmitting ? null : _submit,
-                            isSubmitting: _isSubmitting,
-                          ),
-                        ],
-                      ),
+      appBar: const CompetitionAppBar(),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const _FormHeroTitle(),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                isMobile ? 38 : 58,
+                horizontalPadding,
+                isMobile ? 64 : 92,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextInputBlock(
+                          label: 'Name',
+                          controller: _nameController,
+                        ),
+                        SizedBox(height: formSpacing),
+                        ClassSchoolRowBlock(
+                          selectedClass: _selectedClass,
+                          classOptions: _classOptions,
+                          onClassChanged: (value) {
+                            setState(() {
+                              _selectedClass = value;
+                            });
+                          },
+                          schoolController: _schoolController,
+                        ),
+                        SizedBox(height: formSpacing),
+                        TwoColumnRowBlock(
+                          leftLabel: 'Contact Number',
+                          rightLabel: 'E-Mail Address',
+                          leftController: _contactController,
+                          rightController: _emailController,
+                          leftKeyboardType: TextInputType.phone,
+                          leftInputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                          leftValidator: _validateContactNumber,
+                          rightKeyboardType: TextInputType.emailAddress,
+                        ),
+                        SizedBox(height: formSpacing),
+                        TextInputBlock(
+                          label: 'Address',
+                          controller: _addressController,
+                          maxLines: 3,
+                        ),
+                        SizedBox(height: formSpacing),
+                        TextInputBlock(
+                          label: 'Past Experience (If Any)',
+                          controller: _experienceController,
+                          maxLines: 4,
+                        ),
+                        SizedBox(height: formSpacing),
+                        TextInputBlock(
+                          label: 'A Short Description of your Skillsets',
+                          controller: _skillsetsController,
+                          maxLines: 4,
+                        ),
+                        SizedBox(height: formSpacing),
+                        TextInputBlock(
+                          label:
+                              'How much time can you contribute to Rangaksh?',
+                          controller: _timeController,
+                          maxLines: 3,
+                        ),
+                        SizedBox(height: formSpacing),
+                        PreferredDepartmentBlock(
+                          options: _departments,
+                          selectedValue: _selectedDepartment,
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() {
+                              _selectedDepartment = value;
+                            });
+                          },
+                        ),
+                        SizedBox(height: formSpacing),
+                        TextInputBlock(
+                          label: 'Referral Name from Team Rangaksh',
+                          controller: _referralController,
+                        ),
+                        SizedBox(height: width < 600 ? 24 : 28),
+                        SubmitButton(
+                          onPressed: _isSubmitting ? null : _submit,
+                          isSubmitting: _isSubmitting,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            const _FormFooter(),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _FormHeroTitle extends StatelessWidget {
+  const _FormHeroTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+    return Padding(
+      padding: EdgeInsets.only(top: mobile ? 38 : 58),
+      child: Column(
+        children: [
+          Text(
+            'SECRETARIAT APPLICATION\nFORM',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.montserrat(
+              color: AppColors.textPrimary,
+              fontSize: mobile ? 26 : 32,
+              fontWeight: FontWeight.w700,
+              height: 1.04,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Join us behind the curtain and be a part of Rangaksh’s Organising team',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.montserrat(
+              color: AppColors.textMuted,
+              fontSize: mobile ? 10.5 : 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FormFooter extends StatelessWidget {
+  const _FormFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+    return Container(
+      height: mobile ? 92 : 145,
+      width: double.infinity,
+      color: const Color(0xFF410F19),
+      alignment: Alignment.center,
+      child: Image.asset(
+        'lib/assets/footer.png',
+        width: mobile ? double.infinity : 820,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
       ),
     );
   }
@@ -384,7 +438,6 @@ class FormHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isMobile = width < 600;
-    final isCompact = width < 900;
     final outerPadding = isMobile
         ? 8.0
         : width >= 1200
@@ -399,7 +452,7 @@ class FormHeader extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           color: AppColors.headerBackground,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFF5A2328), width: 1.2),
           boxShadow: const [
             BoxShadow(
@@ -416,43 +469,23 @@ class FormHeader extends StatelessWidget {
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: isMobile
-                ? 12
-                : width >= 1200
-                ? 18
-                : width >= 900
-                ? 16
-                : 14,
-            vertical: isMobile
-                ? 10
-                : width < 900
-                ? 14
-                : 16,
+            horizontal: isMobile ? 12 : 18,
+            vertical: isMobile ? 9 : 13,
           ),
-          child: isCompact
-              ? const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HeaderBrand(),
-                    SizedBox(height: 14),
-                    _HeaderTitleBlock(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      textAlign: TextAlign.left,
-                      isCompact: true,
-                    ),
-                  ],
-                )
-              : const Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _HeaderBrand(),
-                    Spacer(),
-                    _HeaderTitleBlock(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      textAlign: TextAlign.right,
-                    ),
-                  ],
+          child: Row(
+            children: [
+              const _HeaderBrand(),
+              const Spacer(),
+              SizedBox(
+                width: isMobile ? 108 : 142,
+                child: Image.asset(
+                  'lib/assets/mobile_hero.png',
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
                 ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -492,7 +525,7 @@ class _HeaderBrand extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Image.asset(
-          'lib/assets/logo.png',
+          'lib/assets/ananta_logo.png',
           width: logoWidth,
           height: logoHeight,
           fit: BoxFit.contain,
@@ -518,64 +551,6 @@ class _HeaderBrand extends StatelessWidget {
   }
 }
 
-class _HeaderTitleBlock extends StatelessWidget {
-  const _HeaderTitleBlock({
-    required this.crossAxisAlignment,
-    this.textAlign = TextAlign.left,
-    this.isCompact = false,
-  });
-
-  final CrossAxisAlignment crossAxisAlignment;
-  final TextAlign textAlign;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final titleFontSize = isCompact ? (width < 600 ? 15.5 : 17.0) : 18.0;
-    final titleSpacing = isCompact ? (width < 600 ? 1.5 : 2.6) : 4.2;
-    final subtitleFontSize = width < 600
-        ? 11.0
-        : isCompact
-        ? 11.8
-        : 12.0;
-
-    return Column(
-      crossAxisAlignment: crossAxisAlignment,
-      children: [
-        Text(
-          'SECRETARIAT APPLICATION FORM',
-          textAlign: textAlign,
-          style: GoogleFonts.montserrat(
-            color: AppColors.textPrimary,
-            fontSize: titleFontSize,
-            fontWeight: FontWeight.w700,
-            letterSpacing: titleSpacing,
-            height: 1.05,
-          ),
-          maxLines: isCompact ? 2 : 1,
-        ),
-        SizedBox(height: width < 600 ? 4 : 6),
-        SizedBox(
-          width: isCompact ? double.infinity : 470,
-          child: Text(
-            'Join us behind the curtain and be a part of Rangaksh’s Organising team',
-            textAlign: textAlign,
-            style: GoogleFonts.montserrat(
-              color: AppColors.textMuted,
-              fontSize: subtitleFontSize,
-              fontWeight: FontWeight.w500,
-              letterSpacing: width < 600 ? 0.05 : 0.15,
-              height: 1.2,
-            ),
-            maxLines: isCompact ? 3 : 2,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -590,31 +565,7 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color: AppColors.border.withValues(alpha: 0.88),
-          width: 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x61000000),
-            blurRadius: 30,
-            offset: Offset(0, 18),
-          ),
-          BoxShadow(
-            color: Color(0x18000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: child,
-    );
+    return SizedBox(width: double.infinity, child: child);
   }
 }
 
@@ -634,12 +585,7 @@ class TextInputBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 600;
     return SectionCard(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 14 : 24,
-        vertical: compact ? 16 : 22,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -701,10 +647,6 @@ class ClassSchoolRowBlock extends StatelessWidget {
     );
 
     return SectionCard(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 14 : 24,
-        vertical: compact ? 16 : 22,
-      ),
       child: stacked
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -799,10 +741,6 @@ class TwoColumnRowBlock extends StatelessWidget {
     );
 
     return SectionCard(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 14 : 24,
-        vertical: compact ? 16 : 22,
-      ),
       child: stacked
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,13 +779,6 @@ class PreferredDepartmentBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 600;
     return SectionCard(
-      padding: EdgeInsets.fromLTRB(
-        compact ? 14 : 20,
-        compact ? 18 : 24,
-        compact ? 14 : 20,
-        compact ? 10 : 16,
-      ),
-      radius: compact ? 14 : 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -855,8 +786,8 @@ class PreferredDepartmentBlock extends StatelessWidget {
             padding: const EdgeInsets.only(left: 2, bottom: 5),
             child: SectionLabel(
               label: 'Preferred Department',
-              fontSize: compact ? 16 : 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
           SizedBox(height: compact ? 14 : 18),
@@ -926,8 +857,15 @@ class _DepartmentOptionTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: EdgeInsets.zero,
-        decoration: const BoxDecoration(color: Colors.transparent),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 12 : 14,
+          vertical: compact ? 12 : 14,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.inputFill,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border.withValues(alpha: .4)),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1012,10 +950,10 @@ class SubmitButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 600;
     return Align(
-      alignment: Alignment.centerRight,
+      alignment: Alignment.center,
       child: SizedBox(
-        width: compact ? double.infinity : 200,
-        height: compact ? 58 : 68,
+        width: compact ? 230 : 300,
+        height: compact ? 54 : 62,
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
@@ -1023,14 +961,14 @@ class SubmitButton extends StatelessWidget {
             foregroundColor: AppColors.textPrimary,
             side: const BorderSide(color: AppColors.border, width: 1.4),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(12),
             ),
             elevation: 0,
             shadowColor: Colors.transparent,
             textStyle: GoogleFonts.baloo2(
-              fontSize: compact ? 14 : 24,
+              fontSize: compact ? 14 : 18,
               fontWeight: FontWeight.w700,
-              letterSpacing: compact ? 2.8 : 4.4,
+              letterSpacing: compact ? 4 : 7,
             ),
           ),
           child: isSubmitting
@@ -1048,15 +986,7 @@ class SubmitButton extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('SUBMIT'),
-                      SizedBox(width: compact ? 8 : 12),
-                      Icon(
-                        Icons.keyboard_arrow_right_rounded,
-                        size: compact ? 28 : 40,
-                        color: Colors.white,
-                      ),
-                    ],
+                    children: [const Text('SUBMIT')],
                   ),
                 ),
         ),
@@ -1069,8 +999,8 @@ class SectionLabel extends StatelessWidget {
   const SectionLabel({
     super.key,
     required this.label,
-    this.fontSize = 24,
-    this.fontWeight = FontWeight.w700,
+    this.fontSize = 16,
+    this.fontWeight = FontWeight.w500,
   });
 
   final String label;
@@ -1084,7 +1014,7 @@ class SectionLabel extends StatelessWidget {
       label,
       style: TextStyle(
         color: AppColors.textPrimary,
-        fontSize: compact ? fontSize - 2 : fontSize,
+        fontSize: compact ? fontSize - 1 : fontSize,
         fontWeight: fontWeight,
         letterSpacing: compact ? 0.2 : 0.4,
         height: 1.2,
@@ -1146,22 +1076,22 @@ class AppTextField extends StatelessWidget {
           vertical: maxLines > 1 ? (compact ? 16 : 18) : (compact ? 14 : 16),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
             color: AppColors.border.withValues(alpha: 0.72),
             width: 1.1,
           ),
         ),
         focusedBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: AppColors.border, width: 1.4),
         ),
         errorBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: Color(0xFFE0A8A8), width: 1.2),
         ),
         focusedErrorBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: Color(0xFFFFC4C4), width: 1.4),
         ),
         errorStyle: const TextStyle(
@@ -1217,15 +1147,15 @@ class AppDropdownField extends StatelessWidget {
           ),
         ),
         focusedBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: AppColors.border, width: 1.4),
         ),
         errorBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: Color(0xFFE0A8A8), width: 1.2),
         ),
         focusedErrorBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: Color(0xFFFFC4C4), width: 1.4),
         ),
         errorStyle: const TextStyle(
