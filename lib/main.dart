@@ -25,6 +25,7 @@ class MainApp extends StatelessWidget {
       title: 'Ananta Organizers',
       theme: ThemeData(
         useMaterial3: true,
+        
         textTheme: GoogleFonts.baloo2TextTheme(),
         colorSchemeSeed: AppColors.textPrimary,
         scaffoldBackgroundColor: AppColors.pageBackground,

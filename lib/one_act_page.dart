@@ -28,9 +28,14 @@ class OneActPage extends StatelessWidget {
 }
 
 class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CompetitionAppBar({super.key, this.showRangakshLogo = true});
+  const CompetitionAppBar({
+    super.key,
+    this.showRangakshLogo = true,
+    this.hideOrganizerNameOnMobile = false,
+  });
 
   final bool showRangakshLogo;
+  final bool hideOrganizerNameOnMobile;
 
   @override
   Size get preferredSize => const Size.fromHeight(132);
@@ -49,6 +54,7 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {
           final mobile = constraints.maxWidth < 700;
+          final showOrganizerName = !(mobile && hideOrganizerNameOnMobile);
           return Padding(
             padding: EdgeInsets.all(mobile ? 10 : 16),
             child: Container(
@@ -72,20 +78,23 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
                     height: mobile ? 46 : 68,
                     filterQuality: FilterQuality.high,
                   ),
-                  SizedBox(width: mobile ? 9 : 16),
-                  Expanded(
-                    child: Text(
-                      'ANANTA ORGANIZERS',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.montserrat(
-                        color: _CompetitionColors.cream,
-                        fontSize: mobile ? 12 : 19,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: mobile ? 1.8 : 3.2,
+                  if (showOrganizerName) ...[
+                    SizedBox(width: mobile ? 9 : 16),
+                    Expanded(
+                      child: Text(
+                        'ANANTA ORGANIZERS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.montserrat(
+                          color: _CompetitionColors.cream,
+                          fontSize: mobile ? 12 : 19,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: mobile ? 1.8 : 3.2,
+                        ),
                       ),
                     ),
-                  ),
+                  ] else
+                    const Spacer(),
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 240),
                     curve: Curves.easeOutCubic,
@@ -97,8 +106,8 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
                           ? Offset.zero
                           : const Offset(.08, 0),
                       child: Transform.translate(
-                        // The hero asset includes transparent right-side padding.
-                        offset: Offset(mobile ? 22 : 10, 0),
+                        // Keep the mobile mark inside the rounded toolbar.
+                        offset: Offset(mobile ? 0 : 10, 0),
                         child: SizedBox(
                           width: mobile ? 142 : 250,
                           height: mobile ? 100 : 100,
