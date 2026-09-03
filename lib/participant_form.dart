@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
+import 'one_act_submission.dart';
 import 'web_navigation.dart';
 
 class ParticipantForm extends StatefulWidget {
@@ -59,7 +60,8 @@ class _ParticipantFormState extends State<ParticipantForm> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_brochure == null) {
+    final brochure = _brochure;
+    if (brochure == null || brochure.bytes == null) {
       setState(() => _showBrochureError = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -69,7 +71,23 @@ class _ParticipantFormState extends State<ParticipantForm> {
       return;
     }
     if (!mounted) return;
-    Navigator.pushNamed(context, '/paymentgateway');
+    final registration = OneActRegistration(
+      directorName: _directorName.text.trim(),
+      category: _category ?? '',
+      school: _school.text.trim(),
+      contactNumber: _contact.text.trim(),
+      emailAddress: _email.text.trim(),
+      state: _state.text.trim(),
+      pastEvents: _pastEvents.text.trim(),
+      teamMembers: _members.text.trim(),
+      referralName: _referral.text.trim(),
+      brochureName: brochure.name,
+      brochureMimeType: 'application/pdf',
+      brochureBytes: brochure.bytes!,
+    );
+    Navigator.of(
+      context,
+    ).pushNamed('/paydesk?prod=one-act', arguments: registration);
   }
 
   @override
@@ -214,9 +232,9 @@ class _ParticipantFormState extends State<ParticipantForm> {
                           ],
                           validator: (value) {
                             final count = int.tryParse(value ?? '');
-                            return count != null && count >= 8 && count <= 10
+                            return count != null && count >= 3 && count <= 10
                                 ? null
-                                : 'Enter a number between 8 and 10';
+                                : 'Enter a number between 3 and 10';
                           },
                         ),
                         SizedBox(height: 28 * scale),

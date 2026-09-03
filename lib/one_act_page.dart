@@ -203,7 +203,7 @@ class _CompetitionContent extends StatelessWidget {
               ),
               const _RulesGroup(
                 title: 'TEAM SIZE:',
-                rules: ['Minimum: 8 participants', 'Maximum: 10 participants'],
+                rules: ['Minimum: 3 participants', 'Maximum: 10 participants'],
               ),
               const _RulesGroup(
                 title: 'REGISTRATION FEE:',

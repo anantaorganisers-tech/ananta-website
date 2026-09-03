@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
+import 'visitor_pass_submission.dart';
 import 'web_navigation.dart';
 
 class RangakshPage extends StatefulWidget {
@@ -1515,7 +1517,7 @@ class _DjGarbaGlassPanel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '₹200 per person',
+          '₹120 per person',
           style: GoogleFonts.montserrat(
             color: SiteColors.cream,
             fontSize: mobile ? 15 : 19,
@@ -1596,40 +1598,262 @@ class _DjGarbaPassButton extends StatelessWidget {
     return HoverLift(
       child: SizedBox(
         width: mobile ? double.infinity : 360,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .06),
-            border: Border.all(color: SiteColors.cream.withValues(alpha: .62)),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Secure your pass now at ₹120!',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.montserrat(
-                    color: SiteColors.cream,
-                    fontSize: mobile ? 14 : 15,
-                    fontWeight: FontWeight.w600,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openDjGarbaPaydesk(context),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .06),
+              border: Border.all(
+                color: SiteColors.cream.withValues(alpha: .62),
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Secure your pass now at ₹120!',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.montserrat(
+                      color: SiteColors.cream,
+                      fontSize: mobile ? 14 : 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: mobile ? 12 : 28),
-              Icon(
-                Icons.north_east_rounded,
-                color: SiteColors.cream,
-                size: mobile ? 22 : 25,
-              ),
-            ],
+                SizedBox(width: mobile ? 12 : 28),
+                Icon(
+                  Icons.north_east_rounded,
+                  color: SiteColors.cream,
+                  size: mobile ? 22 : 25,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+Future<void> _openDjGarbaPaydesk(BuildContext context) async {
+  final visitor = await showModalBottomSheet<VisitorPassRegistrant>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const _DjGarbaPassDetailsSheet(),
+  );
+  if (!context.mounted || visitor == null) return;
+
+  Navigator.of(context).pushNamed('/paydesk?prod=dj-garba', arguments: visitor);
+}
+
+class _DjGarbaPassDetailsSheet extends StatefulWidget {
+  const _DjGarbaPassDetailsSheet();
+
+  @override
+  State<_DjGarbaPassDetailsSheet> createState() =>
+      _DjGarbaPassDetailsSheetState();
+}
+
+class _DjGarbaPassDetailsSheetState extends State<_DjGarbaPassDetailsSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
+
+  void _continueToPayment() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.pop(
+      context,
+      VisitorPassRegistrant(
+        name: _name.text.trim(),
+        emailAddress: _email.text.trim(),
+        phoneNumber: _phone.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomInset),
+        child: Material(
+          color: const Color(0xFF501221),
+          borderRadius: BorderRadius.circular(22),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'GET YOUR DJ & GARBA PASS',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        color: SiteColors.cream,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '₹120 per person',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        color: SiteColors.cream.withValues(alpha: .75),
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    _DjGarbaPassField(
+                      label: 'Full Name',
+                      controller: _name,
+                      validator: (value) => (value?.trim().length ?? 0) >= 2
+                          ? null
+                          : 'Enter your full name',
+                    ),
+                    const SizedBox(height: 18),
+                    _DjGarbaPassField(
+                      label: 'E-Mail Address',
+                      controller: _email,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) =>
+                          RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value ?? '')
+                          ? null
+                          : 'Enter a valid email address',
+                    ),
+                    const SizedBox(height: 18),
+                    _DjGarbaPassField(
+                      label: 'Phone Number',
+                      controller: _phone,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      validator: (value) =>
+                          RegExp(r'^\d{10}$').hasMatch(value ?? '')
+                          ? null
+                          : 'Enter a valid 10-digit phone number',
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _continueToPayment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF201713),
+                          foregroundColor: SiteColors.cream,
+                          side: const BorderSide(color: SiteColors.gold),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'CONTINUE TO PAYMENT',
+                          style: GoogleFonts.montserrat(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DjGarbaPassField extends StatelessWidget {
+  const _DjGarbaPassField({
+    required this.label,
+    required this.controller,
+    required this.validator,
+    this.keyboardType,
+    this.inputFormatters,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final String? Function(String?) validator;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: GoogleFonts.montserrat(
+          color: SiteColors.cream,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      const SizedBox(height: 9),
+      TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        validator: validator,
+        style: GoogleFonts.montserrat(color: SiteColors.cream),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: const Color(0xFF3F0D1A),
+          errorStyle: GoogleFonts.montserrat(color: Colors.white, fontSize: 11),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 13,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: BorderSide(
+              color: SiteColors.cream.withValues(alpha: .38),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: SiteColors.gold),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: Color(0xFFE0A8A8)),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: Color(0xFFE0A8A8)),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class SponsorVisibilitySection extends StatelessWidget {

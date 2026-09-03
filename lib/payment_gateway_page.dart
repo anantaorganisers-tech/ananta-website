@@ -1,20 +1,57 @@
+import 'dart:math';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import 'one_act_page.dart';
+import 'one_act_submission.dart';
+import 'visitor_pass_submission.dart';
 
-class PaymentGatewayPage extends StatefulWidget {
-  const PaymentGatewayPage({super.key});
+enum PaydeskProduct {
+  oneAct(code: 'one-act', heading: 'ONE ACT COMPETITION', amount: 800),
+  djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 120);
 
-  @override
-  State<PaymentGatewayPage> createState() => _PaymentGatewayPageState();
+  const PaydeskProduct({
+    required this.code,
+    required this.heading,
+    required this.amount,
+  });
+
+  final String code;
+  final String heading;
+  final int amount;
+
+  static PaydeskProduct fromCode(String? code) => values.firstWhere(
+    (product) => product.code == code,
+    orElse: () => PaydeskProduct.oneAct,
+  );
 }
 
-class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
+class PaydeskPage extends StatefulWidget {
+  const PaydeskPage({
+    super.key,
+    required this.product,
+    this.registration,
+    this.visitor,
+  });
+
+  final PaydeskProduct product;
+  final OneActRegistration? registration;
+  final VisitorPassRegistrant? visitor;
+
+  @override
+  State<PaydeskPage> createState() => _PaydeskPageState();
+}
+
+class _PaydeskPageState extends State<PaydeskPage> {
   final _formKey = GlobalKey<FormState>();
   final _upiId = TextEditingController();
   final _transactionId = TextEditingController();
+  bool _isSubmitting = false;
+  bool _paymentRecorded = false;
 
   @override
   void dispose() {
@@ -23,13 +60,212 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
     super.dispose();
   }
 
-  void _checkout() {
+  Future<void> _checkout() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (widget.product == PaydeskProduct.oneAct &&
+        widget.registration == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete the One Act registration form first.'),
+        ),
+      );
+      return;
+    }
+    if (widget.product == PaydeskProduct.djGarba && widget.visitor == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your DJ & Garba pass details first.'),
+        ),
+      );
+      return;
+    }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Payment details recorded.')));
+    setState(() => _isSubmitting = true);
+    try {
+      if (widget.product == PaydeskProduct.oneAct) {
+        await OneActSubmissionService.submitPayment(
+          registration: widget.registration!,
+          upiId: _upiId.text.trim(),
+          transactionId: _transactionId.text.trim(),
+        );
+        if (!mounted) return;
+        setState(() {
+          _paymentRecorded = true;
+          _isSubmitting = false;
+        });
+        await _showOneActConfirmation();
+      } else {
+        final passId = _generatePassId();
+        final qrImage = await _createPassQrImage(passId);
+        final pass = await VisitorPassSubmissionService.submitPayment(
+          registrant: widget.visitor!,
+          upiId: _upiId.text.trim(),
+          transactionId: _transactionId.text.trim(),
+          passId: passId,
+          qrImageBytes: qrImage,
+        );
+        if (!mounted) return;
+        setState(() {
+          _paymentRecorded = true;
+          _isSubmitting = false;
+        });
+        await _showVisitorPass(pass.passId);
+        if (!mounted) return;
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/rangaksh', (route) => false);
+      }
+    } on OneActSubmissionException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not record payment: ${error.message}')),
+      );
+    } on VisitorPassSubmissionException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not create your pass: ${error.message}')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not record payment. Check your connection and try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted && _isSubmitting) setState(() => _isSubmitting = false);
+    }
   }
+
+  Future<Uint8List> _createPassQrImage(String passId) async {
+    final imageData = await QrPainter(
+      data: passId,
+      version: QrVersions.auto,
+      errorCorrectionLevel: QrErrorCorrectLevel.M,
+      gapless: true,
+    ).toImageData(720, format: ui.ImageByteFormat.png);
+    if (imageData == null) {
+      throw const VisitorPassSubmissionException(
+        'Could not generate the pass QR code.',
+      );
+    }
+    return imageData.buffer.asUint8List();
+  }
+
+  String _generatePassId() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final random = Random.secure();
+    final suffix = List.generate(
+      12,
+      (_) => alphabet[random.nextInt(alphabet.length)],
+    ).join();
+    return 'DJG-$suffix';
+  }
+
+  Future<void> _showOneActConfirmation() => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _PaymentColors.field,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: _PaymentColors.gold),
+      ),
+      title: Text(
+        'Payment Details Submitted',
+        style: GoogleFonts.montserrat(
+          color: _PaymentColors.cream,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      content: Text(
+        'Your One Act registration has been recorded and is pending approval.',
+        style: GoogleFonts.montserrat(
+          color: _PaymentColors.cream.withValues(alpha: .84),
+        ),
+      ),
+      actions: [_dialogOkButton(context)],
+    ),
+  );
+
+  Future<void> _showVisitorPass(String passId) => showDialog<void>(
+    context: context,
+    builder: (context) {
+      final mobile = MediaQuery.sizeOf(context).width < 700;
+      final qrSize = mobile ? 190.0 : 230.0;
+      return Dialog(
+        backgroundColor: _PaymentColors.field,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: _PaymentColors.gold),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: mobile ? 330 : 390),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Your DJ & Garba Pass',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.montserrat(
+                    color: _PaymentColors.cream,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  color: Colors.white,
+                  child: SizedBox.square(
+                    dimension: qrSize,
+                    child: QrImageView(
+                      data: passId,
+                      version: QrVersions.auto,
+                      errorCorrectionLevel: QrErrorCorrectLevel.M,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  passId,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.montserrat(
+                    color: _PaymentColors.gold,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Take a screenshot of this pass. Present this QR code at entry.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.montserrat(
+                    color: _PaymentColors.cream.withValues(alpha: .84),
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _dialogOkButton(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  Widget _dialogOkButton(BuildContext context) => TextButton(
+    onPressed: () => Navigator.pop(context),
+    style: TextButton.styleFrom(foregroundColor: Colors.white),
+    child: const Text('OK'),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +274,13 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
 
     return Scaffold(
       appBar: const CompetitionAppBar(),
+      bottomSheet: _isSubmitting
+          ? const LinearProgressIndicator(
+              minHeight: 4,
+              color: _PaymentColors.gold,
+              backgroundColor: _PaymentColors.field,
+            )
+          : null,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -59,7 +302,7 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'ONE ACT COMPETITION',
+                          widget.product.heading,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             color: _PaymentColors.cream,
@@ -79,7 +322,7 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
                           ),
                         ),
                         SizedBox(height: (mobile ? 44 : 58) * scale),
-                        _QrPanel(scale: scale),
+                        _QrPanel(product: widget.product, scale: scale),
                         SizedBox(height: 34 * scale),
                         _PaymentField(
                           label: 'Enter UPI ID',
@@ -109,7 +352,9 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
                             width: (mobile ? 230 : 250) * scale,
                             height: 54 * scale,
                             child: OutlinedButton(
-                              onPressed: _checkout,
+                              onPressed: _isSubmitting || _paymentRecorded
+                                  ? null
+                                  : _checkout,
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: const Color(0xFF201713),
                                 foregroundColor: _PaymentColors.cream,
@@ -121,7 +366,11 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
                                 ),
                               ),
                               child: Text(
-                                'CHECKOUT',
+                                _isSubmitting
+                                    ? 'SAVING...'
+                                    : _paymentRecorded
+                                    ? 'RECORDED'
+                                    : 'CHECKOUT',
                                 style: GoogleFonts.montserrat(
                                   fontSize: 14 * scale,
                                   fontWeight: FontWeight.w700,
@@ -146,8 +395,9 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
 }
 
 class _QrPanel extends StatelessWidget {
-  const _QrPanel({required this.scale});
+  const _QrPanel({required this.product, required this.scale});
 
+  final PaydeskProduct product;
   final double scale;
 
   @override
@@ -194,7 +444,7 @@ class _QrPanel extends StatelessWidget {
           ),
           SizedBox(height: 12 * scale),
           Text(
-            'Amount to be paid: ₹800',
+            'Amount to be paid: ₹${product.amount}',
             textAlign: TextAlign.center,
             style: GoogleFonts.montserrat(
               color: _PaymentColors.cream,
