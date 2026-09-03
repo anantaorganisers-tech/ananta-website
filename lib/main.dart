@@ -7,6 +7,7 @@ import 'package:web/web.dart' as web;
 
 import 'rangaksh_page.dart';
 import 'one_act_page.dart';
+import 'payment_gateway_page.dart';
 import 'sec_form.dart';
 
 void main() {
@@ -25,7 +26,7 @@ class MainApp extends StatelessWidget {
       title: 'Ananta Organizers',
       theme: ThemeData(
         useMaterial3: true,
-        
+
         textTheme: GoogleFonts.baloo2TextTheme(),
         colorSchemeSeed: AppColors.textPrimary,
         scaffoldBackgroundColor: AppColors.pageBackground,
@@ -35,6 +36,7 @@ class MainApp extends StatelessWidget {
         '/rangaksh' => const RangakshPage(),
         '/secretariat' => const SecretariatApplicationFormScreen(),
         '/participant' => const ParticipantForm(),
+        '/paymentgateway' => const PaymentGatewayPage(),
         '/one-act' => const OneActPage(),
         _ => const AnantaPage(),
       },
@@ -43,6 +45,7 @@ class MainApp extends StatelessWidget {
         '/rangaksh/themes': (_) => const RangakshPage(initialSection: 'themes'),
         '/secretariat': (_) => const SecretariatApplicationFormScreen(),
         '/participant': (_) => const ParticipantForm(),
+        '/paymentgateway': (_) => const PaymentGatewayPage(),
         '/one-act': (_) => const OneActPage(),
       },
     );

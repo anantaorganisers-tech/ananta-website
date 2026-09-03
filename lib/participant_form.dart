@@ -68,35 +68,8 @@ class _ParticipantFormState extends State<ParticipantForm> {
       );
       return;
     }
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _ParticipantColors.field,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: _ParticipantColors.gold),
-        ),
-        title: Text(
-          'Registration details validated',
-          style: GoogleFonts.montserrat(
-            color: _ParticipantColors.cream,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: Text(
-          'Your team registration is ready for the payment step. Submission storage will be connected soon.',
-          style: GoogleFonts.montserrat(
-            color: _ParticipantColors.cream.withValues(alpha: .82),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    if (!mounted) return;
+    Navigator.pushNamed(context, '/paymentgateway');
   }
 
   @override
