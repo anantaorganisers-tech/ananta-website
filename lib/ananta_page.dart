@@ -15,6 +15,7 @@ class AnantaPage extends StatefulWidget {
 
 class _AnantaPageState extends State<AnantaPage> {
   final _foundersKey = GlobalKey();
+  final _eventsKey = GlobalKey();
   final _contactKey = GlobalKey();
 
   void _scrollTo(GlobalKey key) {
@@ -35,7 +36,7 @@ class _AnantaPageState extends State<AnantaPage> {
       appBar: AnantaPortfolioAppBar(
         mobile: mobile,
         onFounders: () => _scrollTo(_foundersKey),
-        onEvents: () => openRouteInNewTab('/rangaksh'),
+        onEvents: () => _scrollTo(_eventsKey),
         onContact: () => _scrollTo(_contactKey),
       ),
       body: CustomScrollView(
@@ -49,8 +50,10 @@ class _AnantaPageState extends State<AnantaPage> {
               child: _FoundersSection(key: _foundersKey),
             ),
           ),
-          const SliverToBoxAdapter(
-            child: _PortfolioScrollReveal(child: _EventsSection()),
+          SliverToBoxAdapter(
+            child: _PortfolioScrollReveal(
+              child: _EventsSection(key: _eventsKey),
+            ),
           ),
           SliverToBoxAdapter(
             child: _PortfolioScrollReveal(
@@ -615,7 +618,7 @@ double _founderScale(BuildContext context) =>
     MediaQuery.sizeOf(context).width >= 1100 ? 1.5 : 1;
 
 class _EventsSection extends StatelessWidget {
-  const _EventsSection();
+  const _EventsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
