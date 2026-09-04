@@ -20,7 +20,7 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta
     name="description"
-    content="Ananta Organizers Secretariat Application Form."
+    content="Ananta Organizers- Home"
   >
 
   <!-- iOS meta tags & icons -->
@@ -36,8 +36,136 @@
 
   <title>Ananta Organizers</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      background: #5a061f;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #5a061f;
+    }
+
+    #loading-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 82% 18%, rgba(180, 118, 68, .13), transparent 32%),
+        linear-gradient(135deg, #620a24, #430818 72%);
+      color: #fff3de;
+      transition: opacity 220ms ease-out, visibility 220ms ease-out;
+    }
+
+    #loading-shell.is-ready {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      overflow: hidden;
+      background: rgba(255, 243, 222, .16);
+    }
+
+    .loading-progress::after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 38%;
+      height: 100%;
+      content: '';
+      background: #e1c28b;
+      box-shadow: 0 0 14px rgba(225, 194, 139, .82);
+      animation: loading-progress 1.15s ease-in-out infinite;
+    }
+
+    .loading-skeleton {
+      display: grid;
+      gap: 26px;
+      max-width: 1180px;
+      padding: 122px 8vw 64px;
+      margin: 0 auto;
+    }
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 243, 222, .09);
+      border-radius: 12px;
+      background: rgba(255, 243, 222, .055);
+    }
+
+    .skeleton::after {
+      position: absolute;
+      inset: 0;
+      content: '';
+      background: linear-gradient(100deg, transparent 20%, rgba(255, 243, 222, .09) 48%, transparent 76%);
+      transform: translateX(-100%);
+      animation: skeleton-shimmer 1.45s ease-in-out infinite;
+    }
+
+    .skeleton-nav {
+      width: 100%;
+      height: 84px;
+    }
+
+    .skeleton-title {
+      width: min(620px, 82%);
+      height: clamp(36px, 6vw, 72px);
+      margin: 12vh auto 0;
+    }
+
+    .skeleton-copy {
+      width: min(480px, 68%);
+      height: 18px;
+      margin: 0 auto;
+    }
+
+    .skeleton-cta {
+      width: 220px;
+      height: 52px;
+      margin: 18px auto 0;
+    }
+
+    @keyframes loading-progress {
+      from { transform: translateX(-110%); }
+      to { transform: translateX(290%); }
+    }
+
+    @keyframes skeleton-shimmer {
+      to { transform: translateX(100%); }
+    }
+
+    @media (max-width: 700px) {
+      .loading-skeleton {
+        gap: 18px;
+        padding: 88px 16px 40px;
+      }
+
+      .skeleton-nav { height: 62px; }
+      .skeleton-title { margin-top: 16vh; }
+    }
+  </style>
 </head>
 <body>
+  <div id="loading-shell" role="status" aria-label="Loading Ananta Organizers">
+    <div class="loading-progress"></div>
+    <div class="loading-skeleton" aria-hidden="true">
+      <div class="skeleton skeleton-nav"></div>
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-copy"></div>
+      <div class="skeleton skeleton-cta"></div>
+    </div>
+  </div>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
@@ -46,6 +174,11 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      document.getElementById('loading-shell').classList.add('is-ready');
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
