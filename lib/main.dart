@@ -9,6 +9,7 @@ import 'rangaksh_page.dart';
 import 'one_act_page.dart';
 import 'payment_gateway_page.dart';
 import 'sec_form.dart';
+import 'sponsorshipform.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -38,6 +39,7 @@ class MainApp extends StatelessWidget {
         '/participant' => const ParticipantForm(),
         '/paymentgateway' => const PaymentGatewayPage(),
         '/one-act' => const OneActPage(),
+        '/sponsor-form' => const SponsorshipForm(),
         _ => const AnantaPage(),
       },
       routes: {
@@ -47,6 +49,7 @@ class MainApp extends StatelessWidget {
         '/participant': (_) => const ParticipantForm(),
         '/paymentgateway': (_) => const PaymentGatewayPage(),
         '/one-act': (_) => const OneActPage(),
+        '/sponsor-form': (_) => const SponsorshipForm(),
       },
     );
   }
