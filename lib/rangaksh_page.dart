@@ -1058,12 +1058,17 @@ class ActivitiesSection extends StatelessWidget {
     'lib/assets/dance_card.png',
     'lib/assets/djgarba_card.png',
   ];
+  static const stallCard = 'lib/assets/stalls_card.png';
+  static const mobileCards = [...featured, stallCard];
+
   @override
   Widget build(BuildContext context) => _SectionFrame(
     child: LayoutBuilder(
       builder: (context, c) {
         final v = LayoutValues(c.maxWidth);
         final columns = v.mobile ? 1 : 3;
+        final gap = v.mobile ? 22.0 : 25.0;
+        final desktopCardWidth = (c.maxWidth - gap * 2) / 3;
         return Padding(
           padding: EdgeInsets.symmetric(vertical: v.mobile ? 62 : 110),
           child: Column(
@@ -1087,9 +1092,16 @@ class ActivitiesSection extends StatelessWidget {
                 ),
               ),
               SizedBox(height: v.mobile ? 34 : 54),
-              v.mobile
-                  ? AssetCarousel(paths: featured, aspectRatio: 1257 / 1725)
-                  : _AssetGrid(paths: featured, columns: columns, gap: 25),
+              if (v.mobile) ...[
+                AssetCarousel(paths: mobileCards, aspectRatio: 1257 / 1725),
+              ] else ...[
+                _AssetGrid(paths: featured, columns: columns, gap: gap),
+                SizedBox(height: gap * 1.45),
+                SizedBox(
+                  width: desktopCardWidth,
+                  child: const _AssetCard(path: stallCard),
+                ),
+              ],
             ],
           ),
         );
@@ -1146,14 +1158,7 @@ class _AssetCarouselState extends State<AssetCarousel> {
                     right: index == widget.paths.length - 1 ? 0 : 14,
                   ),
                   child: HoverLift(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.asset(
-                        widget.paths[index],
-                        fit: BoxFit.cover,
-                        filterQuality: FilterQuality.high,
-                      ),
-                    ),
+                    child: _AssetCard(path: widget.paths[index]),
                   ),
                 ),
               ),
@@ -1204,20 +1209,27 @@ class _AssetGrid extends StatelessWidget {
           for (final path in paths)
             SizedBox(
               width: width,
-              child: HoverLift(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    path,
-                    fit: BoxFit.cover,
-                    filterQuality: FilterQuality.high,
-                  ),
-                ),
-              ),
+              child: HoverLift(child: _AssetCard(path: path)),
             ),
         ],
       );
     },
+  );
+}
+
+class _AssetCard extends StatelessWidget {
+  const _AssetCard({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(16),
+    child: Image.asset(
+      path,
+      fit: BoxFit.cover,
+      filterQuality: FilterQuality.high,
+    ),
   );
 }
 
