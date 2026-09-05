@@ -1,21 +1,41 @@
-const APPLICATIONS_SHEET_NAME = 'Applications';
-const SPONSORS_SHEET_NAME = 'Sponsors';
+const SHEET_NAME = 'Applications';
 
 function doPost(e) {
   try {
     const payload = parsePayload_(e);
-    const isSponsorForm = payload.formType === 'sponsor';
-    const sheet = getOrCreateSheet_(
-      isSponsorForm ? SPONSORS_SHEET_NAME : APPLICATIONS_SHEET_NAME,
-    );
+    const sheet = getOrCreateSheet_();
 
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(isSponsorForm ? sponsorHeaders_() : applicationHeaders_());
+      sheet.appendRow([
+        'Submitted At',
+        'Name',
+        'Class',
+        'School',
+        'Contact Number',
+        'E-Mail Address',
+        'Address',
+        'Past Experience (If Any)',
+        'A Short Description of your Skillsets',
+        'How much time can you contribute to Rangaksh?',
+        'Preferred Department',
+        'Referral name from Team Rangaksh',
+      ]);
     }
 
-    sheet.appendRow(
-      isSponsorForm ? sponsorRow_(payload) : applicationRow_(payload),
-    );
+    sheet.appendRow([
+      payload.submittedAt || new Date().toISOString(),
+      payload.name || '',
+      payload.studentClass || '',
+      payload.school || '',
+      payload.contactNumber || '',
+      payload.emailAddress || '',
+      payload.address || '',
+      payload.pastExperience || '',
+      payload.skillsets || '',
+      payload.timeContribution || '',
+      payload.preferredDepartment || '',
+      payload.referralName || '',
+    ]);
 
     return ContentService.createTextOutput(
       JSON.stringify({'success': true}),
@@ -30,80 +50,18 @@ function doPost(e) {
   }
 }
 
-function applicationHeaders_() {
-  return [
-    'Submitted At',
-    'Name',
-    'Class',
-    'School',
-    'Contact Number',
-    'E-Mail Address',
-    'Address',
-    'Past Experience (If Any)',
-    'A Short Description of your Skillsets',
-    'How much time can you contribute to Rangaksh?',
-    'Preferred Department',
-    'Referral name from Team Rangaksh',
-  ];
-}
-
-function sponsorHeaders_() {
-  return [
-    'Submitted At',
-    'Name of Business/Shop',
-    'Name of Owner',
-    'Contact Number',
-    'E-Mail Address',
-    'Sponsorship Package',
-    'Operational Address',
-    'Deliverables',
-    'Queries',
-  ];
-}
-
-function applicationRow_(payload) {
-  return [
-    payload.submittedAt || new Date().toISOString(),
-    payload.name || '',
-    payload.studentClass || '',
-    payload.school || '',
-    payload.contactNumber || '',
-    payload.emailAddress || '',
-    payload.address || '',
-    payload.pastExperience || '',
-    payload.skillsets || '',
-    payload.timeContribution || '',
-    payload.preferredDepartment || '',
-    payload.referralName || '',
-  ];
-}
-
-function sponsorRow_(payload) {
-  return [
-    payload.submittedAt || new Date().toISOString(),
-    payload.businessName || '',
-    payload.ownerName || '',
-    payload.contactNumber || '',
-    payload.emailAddress || '',
-    payload.sponsorshipPackage || '',
-    payload.operationalAddress || '',
-    payload.deliverables || '',
-    payload.queries || '',
-  ];
-}
-
 function getOrCreateSheet_(sheetName) {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const activeSheet = spreadsheet.getActiveSheet();
-  const existing = spreadsheet.getSheetByName(sheetName);
+  const existing = spreadsheet.getSheetByName(SHEET_NAME);
   if (existing) {
     return existing;
   }
-  if (activeSheet && activeSheet.getLastRow() === 0) {
-    activeSheet.setName(sheetName);
+  if (activeSheet) {
+    activeSheet.setName(SHEET_NAME);
     return activeSheet;
   }
-  return spreadsheet.insertSheet(sheetName);
+  return spreadsheet.insertSheet(SHEET_NAME);
 }
 
 function parsePayload_(e) {
@@ -118,7 +76,6 @@ function parsePayload_(e) {
   const params = e && e.parameter ? e.parameter : {};
 
   return {
-    formType: params.formType || '',
     submittedAt: params.submittedAt || '',
     name: params.name || '',
     studentClass: params.studentClass || '',
@@ -131,11 +88,5 @@ function parsePayload_(e) {
     timeContribution: params.timeContribution || '',
     preferredDepartment: params.preferredDepartment || '',
     referralName: params.referralName || '',
-    businessName: params.businessName || '',
-    ownerName: params.ownerName || '',
-    sponsorshipPackage: params.sponsorshipPackage || '',
-    operationalAddress: params.operationalAddress || '',
-    deliverables: params.deliverables || '',
-    queries: params.queries || '',
   };
 }

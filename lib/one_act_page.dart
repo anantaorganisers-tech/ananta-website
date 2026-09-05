@@ -55,6 +55,9 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
         builder: (context, constraints) {
           final mobile = constraints.maxWidth < 700;
           final showOrganizerName = !(mobile && hideOrganizerNameOnMobile);
+          final organizerLabel = showOrganizerName
+              ? 'ANANTA ORGANIZERS'
+              : 'ANANTA';
           return Padding(
             padding: EdgeInsets.all(mobile ? 10 : 16),
             child: Container(
@@ -78,23 +81,24 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
                     height: mobile ? 46 : 68,
                     filterQuality: FilterQuality.high,
                   ),
-                  if (showOrganizerName) ...[
-                    SizedBox(width: mobile ? 9 : 16),
-                    Expanded(
-                      child: Text(
-                        'ANANTA ORGANIZERS',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.montserrat(
-                          color: _CompetitionColors.cream,
-                          fontSize: mobile ? 12 : 19,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: mobile ? 1.8 : 3.2,
-                        ),
+                  SizedBox(width: mobile ? 8 : 16),
+                  Flexible(
+                    fit: showOrganizerName ? FlexFit.tight : FlexFit.loose,
+                    child: Text(
+                      organizerLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.montserrat(
+                        color: _CompetitionColors.cream,
+                        fontSize: mobile ? (showOrganizerName ? 12 : 11) : 19,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: mobile
+                            ? (showOrganizerName ? 1.8 : 1.6)
+                            : 3.2,
                       ),
                     ),
-                  ] else
-                    const Spacer(),
+                  ),
+                  const Spacer(),
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 240),
                     curve: Curves.easeOutCubic,
@@ -109,7 +113,7 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
                         // Keep the mobile mark inside the rounded toolbar.
                         offset: Offset(mobile ? 0 : 10, 0),
                         child: SizedBox(
-                          width: mobile ? 142 : 250,
+                          width: mobile ? 132 : 250,
                           height: mobile ? 100 : 100,
                           child: Image.asset(
                             'lib/assets/appbar_rangaksh.png',
@@ -203,7 +207,7 @@ class _CompetitionContent extends StatelessWidget {
               ),
               const _RulesGroup(
                 title: 'TEAM SIZE:',
-                rules: ['Minimum: 8 participants', 'Maximum: 10 participants'],
+                rules: ['Minimum: 3 participants', 'Maximum: 10 participants'],
               ),
               const _RulesGroup(
                 title: 'REGISTRATION FEE:',
