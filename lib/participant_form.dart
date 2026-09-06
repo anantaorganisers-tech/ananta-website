@@ -24,8 +24,6 @@ class _ParticipantFormState extends State<ParticipantForm> {
   final _members = TextEditingController();
   final _referral = TextEditingController();
   String? _category;
-  String? _brochureName;
-  Uint8List? _brochureBytes;
   PlatformFile? _brochure;
   bool _showBrochureError = false;
 
@@ -62,16 +60,6 @@ class _ParticipantFormState extends State<ParticipantForm> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_brochureBytes == null || _brochureName == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload your play brochure PDF.')),
-      );
-      return;
-    }
-
-    final registration = OneActRegistration(
-      directorName: _directorName.text.trim(),
-      category: _category!,
     final brochure = _brochure;
     if (brochure == null || brochure.bytes == null) {
       setState(() => _showBrochureError = true);
@@ -82,7 +70,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
       );
       return;
     }
-    if (!mounted) return;
+
     final registration = OneActRegistration(
       directorName: _directorName.text.trim(),
       category: _category ?? '',
@@ -93,38 +81,11 @@ class _ParticipantFormState extends State<ParticipantForm> {
       pastEvents: _pastEvents.text.trim(),
       teamMembers: _members.text.trim(),
       referralName: _referral.text.trim(),
-      brochureName: _brochureName!,
-      brochureBytes: _brochureBytes!,
-    );
-
-    Navigator.of(
-      context,
-    ).pushNamed('/paydesk?prod=one-act', arguments: registration);
-  }
-
-  Future<void> _pickBrochure() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
-      withData: true,
-    );
-    final file = result?.files.single;
-    if (file == null) return;
-    if ((file.extension ?? '').toLowerCase() != 'pdf' || file.bytes == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose a valid PDF file.')),
-      );
-      return;
-    }
-    setState(() {
-      _brochureName = file.name;
-      _brochureBytes = file.bytes;
-    });
       brochureName: brochure.name,
       brochureMimeType: 'application/pdf',
       brochureBytes: brochure.bytes!,
     );
+
     Navigator.of(
       context,
     ).pushNamed('/paydesk?prod=one-act', arguments: registration);
@@ -251,10 +212,6 @@ class _ParticipantFormState extends State<ParticipantForm> {
                           validator: (_) => null,
                         ),
                         SizedBox(height: 28 * scale),
-                        _PdfUploadField(
-                          label: 'Brochure of your Play (PDF)',
-                          fileName: _brochureName,
-                          onTap: _pickBrochure,
                         _BrochureUploadField(
                           brochure: _brochure,
                           showError: _showBrochureError,
@@ -620,91 +577,6 @@ class _ResponsiveFieldRow extends StatelessWidget {
             ],
           ),
   );
-}
-
-class _PdfUploadField extends StatelessWidget {
-  const _PdfUploadField({
-    required this.label,
-    required this.fileName,
-    required this.onTap,
-  });
-
-  final String label;
-  final String? fileName;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = _formScale(context);
-    return FormField<String>(
-      validator: (_) =>
-          fileName == null ? 'Please upload a PDF brochure' : null,
-      builder: (field) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.montserrat(
-              color: _ParticipantColors.cream,
-              fontSize: 16 * scale,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 12 * scale),
-          InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                horizontal: 16 * scale,
-                vertical: 18 * scale,
-              ),
-              decoration: BoxDecoration(
-                color: _ParticipantColors.field,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: field.hasError
-                      ? const Color(0xFFE0A8A8)
-                      : _ParticipantColors.gold,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.picture_as_pdf_rounded,
-                    color: _ParticipantColors.cream,
-                  ),
-                  SizedBox(width: 12 * scale),
-                  Expanded(
-                    child: Text(
-                      fileName ?? 'Upload PDF brochure',
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.montserrat(
-                        color: _ParticipantColors.cream,
-                        fontSize: 14 * scale,
-                      ),
-                    ),
-                  ),
-                  const Icon(
-                    Icons.upload_file_rounded,
-                    color: _ParticipantColors.cream,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (field.hasError) ...[
-            const SizedBox(height: 7),
-            Text(
-              field.errorText!,
-              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 11),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 class _ParticipantFooter extends StatelessWidget {

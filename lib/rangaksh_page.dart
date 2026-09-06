@@ -1682,6 +1682,8 @@ class _DjGarbaPassDetailsSheetState extends State<_DjGarbaPassDetailsSheet> {
         name: _name.text.trim(),
         emailAddress: _email.text.trim(),
         phoneNumber: _phone.text.trim(),
+        packageName: 'DJ AND GARBA NIGHT',
+        amount: 150,
       ),
     );
   }

@@ -10,9 +10,6 @@ import 'one_act_submission.dart';
 import 'payment_gateway_page.dart';
 import 'rangaksh_page.dart';
 import 'sec_form.dart';
-import 'payment_gateway_page.dart';
-import 'sec_form.dart';
-import 'one_act_submission.dart';
 import 'visitor_pass_submission.dart';
 
 void main() {
@@ -32,7 +29,6 @@ class MainApp extends StatelessWidget {
       title: 'Ananta Organizers',
       theme: ThemeData(
         useMaterial3: true,
-
         textTheme: GoogleFonts.baloo2TextTheme(),
         colorSchemeSeed: AppColors.textPrimary,
         scaffoldBackgroundColor: AppColors.pageBackground,
@@ -46,10 +42,6 @@ class MainApp extends StatelessWidget {
         '/rangaksh' => const RangakshPage(),
         '/secretariat' => const SecretariatApplicationFormScreen(),
         '/participant' => const ParticipantForm(),
-        '/paydesk' => PaydeskPage(
-          product: PaydeskProduct.fromCode(browserUri.queryParameters['prod']),
-        ),
-        '/paymentgateway' => const PaydeskPage(product: PaydeskProduct.oneAct),
         '/one-act' => const OneActPage(),
         _ => const AnantaPage(),
       },
@@ -58,43 +50,22 @@ class MainApp extends StatelessWidget {
         '/rangaksh/themes': (_) => const RangakshPage(initialSection: 'themes'),
         '/secretariat': (_) => const SecretariatApplicationFormScreen(),
         '/participant': (_) => const ParticipantForm(),
-        '/paydesk': (_) => const PaydeskPage(product: PaydeskProduct.oneAct),
-        '/paymentgateway': (_) =>
-            const PaydeskPage(product: PaydeskProduct.oneAct),
         '/one-act': (_) => const OneActPage(),
         '/paydesk': (_) => const PaydeskPage(product: PaydeskProduct.oneAct),
         '/paymentgateway': (_) =>
             const PaydeskPage(product: PaydeskProduct.oneAct),
       },
       onGenerateRoute: (settings) {
-        final uri = Uri.parse(settings.name ?? '');
-        if (uri.path == '/paydesk') {
-          final arguments = settings.arguments;
-          return MaterialPageRoute(
-            builder: (_) => PaydeskPage(
-              product: PaydeskProduct.fromCode(uri.queryParameters['prod']),
-              registration: arguments is OneActRegistration ? arguments : null,
-              visitor: arguments is VisitorPassRegistrant ? arguments : null,
-            ),
-          );
-        }
-        return null;
-      },
-      onGenerateRoute: (settings) {
         final uri = Uri.tryParse(settings.name ?? '');
         if (uri?.path != '/paydesk') return null;
 
-        final registration = settings.arguments;
+        final arguments = settings.arguments;
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => PaydeskPage(
             product: PaydeskProduct.fromCode(uri?.queryParameters['prod']),
-            registration: registration is OneActRegistration
-                ? registration
-                : null,
-            visitor: registration is VisitorPassRegistrant
-                ? registration
-                : null,
+            registration: arguments is OneActRegistration ? arguments : null,
+            visitor: arguments is VisitorPassRegistrant ? arguments : null,
           ),
         );
       },

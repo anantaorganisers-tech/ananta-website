@@ -169,8 +169,6 @@ function saveOneActPayment_(payload) {
     .setFormula(
       '=HYPERLINK("' + escapeFormulaString_(brochureUrl) + '", "View PDF")',
     );
-    .setFormula('=HYPERLINK("' + escapeFormulaString_(brochureUrl) + '", "View PDF")');
-
   return jsonResponse_({success: true, row: row});
 }
 
@@ -274,7 +272,6 @@ function saveVisitorPassQrAtRow_(sheet, row, passId, qrImageBase64) {
         escapeFormulaString_(file.getUrl()) +
         '", "View QR screenshot")',
     );
-    .setFormula('=HYPERLINK("' + escapeFormulaString_(file.getUrl()) + '", "View QR screenshot")');
 }
 
 function validateOneActPayload_(payload) {
@@ -319,13 +316,6 @@ function validateVisitorPassPayload_(payload) {
   if (![50, 150, 200].includes(amount)) {
     throw new Error('Invalid visitor pass amount.');
   }
-  ].forEach(
-    function (field) {
-      if (!payload[field]) {
-        throw new Error('Missing required field: ' + field);
-      }
-    },
-  );
 }
 
 function saveBrochure_(payload) {

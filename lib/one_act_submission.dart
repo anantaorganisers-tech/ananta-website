@@ -37,7 +37,6 @@ class OneActSubmissionService {
   OneActSubmissionService._();
 
   static const googleAppsScriptUrl =
-      'https://script.google.com/macros/s/AKfycbx-4qyjBLhoUTJHZe8XCXsLtoMEyXCRVbttgGNfC8qx5HOeMR5smCfYE4GRqYJFYfBg/exec';
       'https://script.google.com/macros/s/AKfycbxooheG6-RCJZ-4XK3VDcsmNn3CRriEnO9Le3lpN7JtGVq3KHUjuon4hFs_KV2LFPAM/exec';
 
   static Future<void> submitPayment({
@@ -77,7 +76,6 @@ class OneActSubmissionService {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       if (body['success'] != true) {
         throw OneActSubmissionException(
-          body['message']?.toString() ?? 'The payment could not be recorded.',
           body['message']?.toString() ?? 'The registration could not be saved.',
         );
       }
