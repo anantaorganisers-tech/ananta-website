@@ -233,9 +233,9 @@ class _ParticipantFormState extends State<ParticipantForm> {
                           ],
                           validator: (value) {
                             final count = int.tryParse(value ?? '');
-                            return count != null && count >= 3 && count <= 10
+                            return count != null && count >= 6 && count <= 10
                                 ? null
-                                : 'Enter a number between 3 and 10';
+                                : 'Enter a number between 6 and 10';
                           },
                         ),
                         SizedBox(height: 28 * scale),

@@ -20,6 +20,7 @@ class RangakshPage extends StatefulWidget {
 class _RangakshPageState extends State<RangakshPage> {
   final _aboutKey = GlobalKey();
   final _activitiesKey = GlobalKey();
+  final _ticketsKey = GlobalKey();
   final _themeKey = GlobalKey();
   final _sponsorKey = GlobalKey();
   final _joinKey = GlobalKey();
@@ -76,11 +77,12 @@ class _RangakshPageState extends State<RangakshPage> {
               child: ScrollReveal(
                 child: HeroSection(
                   onJoin: () => openRouteInNewTab('/secretariat'),
+                  onTickets: () => _scrollTo(_ticketsKey),
                 ),
               ),
             ),
-            const SliverToBoxAdapter(
-              child: ScrollReveal(child: CelebrationSection()),
+            SliverToBoxAdapter(
+              child: ScrollReveal(child: CelebrationSection(key: _ticketsKey)),
             ),
             SliverToBoxAdapter(
               child: ScrollReveal(child: IntroSection(key: _aboutKey)),
@@ -233,9 +235,10 @@ class _HoverLiftState extends State<HoverLift> {
 }
 
 class HeroSection extends StatelessWidget {
-  const HeroSection({super.key, required this.onJoin});
+  const HeroSection({super.key, required this.onJoin, required this.onTickets});
 
   final VoidCallback onJoin;
+  final VoidCallback onTickets;
 
   @override
   Widget build(BuildContext context) {
@@ -278,8 +281,12 @@ class HeroSection extends StatelessWidget {
                 ),
               ),
               values.mobile
-                  ? _MobileHeroContent(onJoin: onJoin)
-                  : _HeroContent(values: values, onJoin: onJoin),
+                  ? _MobileHeroContent(onJoin: onJoin, onTickets: onTickets)
+                  : _HeroContent(
+                      values: values,
+                      onJoin: onJoin,
+                      onTickets: onTickets,
+                    ),
             ],
           ),
         );
@@ -289,9 +296,10 @@ class HeroSection extends StatelessWidget {
 }
 
 class _MobileHeroContent extends StatelessWidget {
-  const _MobileHeroContent({required this.onJoin});
+  const _MobileHeroContent({required this.onJoin, required this.onTickets});
 
   final VoidCallback onJoin;
+  final VoidCallback onTickets;
 
   @override
   Widget build(BuildContext context) {
@@ -350,11 +358,16 @@ class _MobileHeroContent extends StatelessWidget {
               top: 462,
               left: 0,
               right: 0,
-              child: Center(
-                child: _CompactHeroButton(
-                  label: 'Sponsor Us',
-                  onTap: () => openRouteInNewTab('/sponsor-form'),
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _CompactHeroButton(
+                    label: 'Sponsor Us',
+                    onTap: () => openRouteInNewTab('/sponsor-form'),
+                  ),
+                  const SizedBox(width: 10),
+                  _CompactHeroButton(label: 'Book Tickets', onTap: onTickets),
+                ],
               ),
             ),
           ],
@@ -383,9 +396,14 @@ class _CompactHeroButton extends StatelessWidget {
 }
 
 class _HeroContent extends StatelessWidget {
-  const _HeroContent({required this.values, required this.onJoin});
+  const _HeroContent({
+    required this.values,
+    required this.onJoin,
+    required this.onTickets,
+  });
   final LayoutValues values;
   final VoidCallback onJoin;
+  final VoidCallback onTickets;
 
   @override
   Widget build(BuildContext context) {
@@ -426,24 +444,33 @@ class _HeroContent extends StatelessWidget {
                           label: 'SPONSOR US',
                           onTap: () => openRouteInNewTab('/sponsor-form'),
                         ),
+                        const SizedBox(height: 14),
+                        _HeroButton(
+                          label: 'BOOK YOUR TICKETS',
+                          onTap: onTickets,
+                        ),
                       ],
                     )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  : Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 22,
+                      runSpacing: 16,
                       children: [
                         _HeroButton(
                           label: 'JOIN AS PARTICIPANT',
                           onTap: () => openRouteInNewTab('/participant'),
                         ),
-                        const SizedBox(width: 22),
                         _HeroButton(
                           label: 'JOIN AS SECRETARIAT',
                           onTap: onJoin,
                         ),
-                        const SizedBox(width: 22),
                         _HeroButton(
                           label: 'SPONSOR US',
                           onTap: () => openRouteInNewTab('/sponsor-form'),
+                        ),
+                        _HeroButton(
+                          label: 'BOOK YOUR TICKETS',
+                          onTap: onTickets,
                         ),
                       ],
                     ),
@@ -899,9 +926,25 @@ class CelebrationSection extends StatelessWidget {
               alignment: values.mobile
                   ? Alignment.centerLeft
                   : Alignment.centerRight,
-              child: _TicketCtaButton(
-                label: 'BOOK YOUR TICKETS',
-                onTap: () => _openTicketPaydesk(context),
+              child: Column(
+                crossAxisAlignment: values.mobile
+                    ? CrossAxisAlignment.start
+                    : CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'AUDIENCE TICKET: ₹ 80',
+                    style: GoogleFonts.montserrat(
+                      color: SiteColors.cream,
+                      fontSize: values.mobile ? 16 : 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _TicketCtaButton(
+                    label: 'BOOK YOUR TICKETS NOW @ ₹50',
+                    onTap: () => _openTicketPaydesk(context),
+                  ),
+                ],
               ),
             ),
           ],
