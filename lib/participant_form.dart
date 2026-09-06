@@ -1,8 +1,10 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
+import 'one_act_submission.dart';
 import 'web_navigation.dart';
 
 class ParticipantForm extends StatefulWidget {
@@ -19,10 +21,11 @@ class _ParticipantFormState extends State<ParticipantForm> {
   final _email = TextEditingController();
   final _state = TextEditingController();
   final _pastEvents = TextEditingController();
-  final _brochure = TextEditingController();
   final _members = TextEditingController();
   final _referral = TextEditingController();
   String? _category;
+  String? _brochureName;
+  Uint8List? _brochureBytes;
 
   @override
   void dispose() {
@@ -33,7 +36,6 @@ class _ParticipantFormState extends State<ParticipantForm> {
       _email,
       _state,
       _pastEvents,
-      _brochure,
       _members,
       _referral,
     ]) {
@@ -44,35 +46,51 @@ class _ParticipantFormState extends State<ParticipantForm> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _ParticipantColors.field,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: _ParticipantColors.gold),
-        ),
-        title: Text(
-          'Registration details saved',
-          style: GoogleFonts.montserrat(
-            color: _ParticipantColors.cream,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: Text(
-          'Your team registration is ready for the payment step.',
-          style: GoogleFonts.montserrat(
-            color: _ParticipantColors.cream.withValues(alpha: .82),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+    if (_brochureBytes == null || _brochureName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload your play brochure PDF.')),
+      );
+      return;
+    }
+
+    final registration = OneActRegistration(
+      directorName: _directorName.text.trim(),
+      category: _category!,
+      school: _school.text.trim(),
+      contactNumber: _contact.text.trim(),
+      emailAddress: _email.text.trim(),
+      state: _state.text.trim(),
+      pastEvents: _pastEvents.text.trim(),
+      teamMembers: _members.text.trim(),
+      referralName: _referral.text.trim(),
+      brochureName: _brochureName!,
+      brochureBytes: _brochureBytes!,
     );
+
+    Navigator.of(
+      context,
+    ).pushNamed('/paydesk?prod=one-act', arguments: registration);
+  }
+
+  Future<void> _pickBrochure() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf'],
+      withData: true,
+    );
+    final file = result?.files.single;
+    if (file == null) return;
+    if ((file.extension ?? '').toLowerCase() != 'pdf' || file.bytes == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please choose a valid PDF file.')),
+      );
+      return;
+    }
+    setState(() {
+      _brochureName = file.name;
+      _brochureBytes = file.bytes;
+    });
   }
 
   @override
@@ -196,10 +214,10 @@ class _ParticipantFormState extends State<ParticipantForm> {
                           validator: (_) => null,
                         ),
                         SizedBox(height: 28 * scale),
-                        _Field(
+                        _PdfUploadField(
                           label: 'Brochure of your Play (PDF)',
-                          controller: _brochure,
-                          maxLines: 5,
+                          fileName: _brochureName,
+                          onTap: _pickBrochure,
                         ),
                         SizedBox(height: 28 * scale),
                         _Field(
@@ -211,9 +229,9 @@ class _ParticipantFormState extends State<ParticipantForm> {
                           ],
                           validator: (value) {
                             final count = int.tryParse(value ?? '');
-                            return count != null && count >= 8 && count <= 10
+                            return count != null && count >= 3 && count <= 10
                                 ? null
-                                : 'Enter a number between 8 and 10';
+                                : 'Enter a number between 3 and 10';
                           },
                         ),
                         SizedBox(height: 28 * scale),
@@ -382,9 +400,12 @@ class _CategoryField extends StatelessWidget {
               borderSide: const BorderSide(color: _ParticipantColors.gold),
             ),
           ),
-          items: const ['School Team', 'College Team', 'Independent Team']
-              .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-              .toList(),
+          items:
+              const ['Class 6 - Class 8', 'Class 9 - Class 12', 'Undergraduate']
+                  .map(
+                    (item) => DropdownMenuItem(value: item, child: Text(item)),
+                  )
+                  .toList(),
           onChanged: onChanged,
           validator: (value) =>
               value == null ? 'Please select a category' : null,
@@ -411,6 +432,91 @@ class _ResponsiveFieldRow extends StatelessWidget {
             ],
           ),
   );
+}
+
+class _PdfUploadField extends StatelessWidget {
+  const _PdfUploadField({
+    required this.label,
+    required this.fileName,
+    required this.onTap,
+  });
+
+  final String label;
+  final String? fileName;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _formScale(context);
+    return FormField<String>(
+      validator: (_) =>
+          fileName == null ? 'Please upload a PDF brochure' : null,
+      builder: (field) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.montserrat(
+              color: _ParticipantColors.cream,
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 12 * scale),
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                horizontal: 16 * scale,
+                vertical: 18 * scale,
+              ),
+              decoration: BoxDecoration(
+                color: _ParticipantColors.field,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: field.hasError
+                      ? const Color(0xFFE0A8A8)
+                      : _ParticipantColors.gold,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.picture_as_pdf_rounded,
+                    color: _ParticipantColors.cream,
+                  ),
+                  SizedBox(width: 12 * scale),
+                  Expanded(
+                    child: Text(
+                      fileName ?? 'Upload PDF brochure',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.montserrat(
+                        color: _ParticipantColors.cream,
+                        fontSize: 14 * scale,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.upload_file_rounded,
+                    color: _ParticipantColors.cream,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (field.hasError) ...[
+            const SizedBox(height: 7),
+            Text(
+              field.errorText!,
+              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 11),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _ParticipantFooter extends StatelessWidget {

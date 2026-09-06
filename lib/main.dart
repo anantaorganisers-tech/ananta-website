@@ -5,9 +5,12 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:web/web.dart' as web;
 
-import 'rangaksh_page.dart';
 import 'one_act_page.dart';
+import 'one_act_submission.dart';
+import 'payment_gateway_page.dart';
+import 'rangaksh_page.dart';
 import 'sec_form.dart';
+import 'visitor_pass_submission.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -19,7 +22,8 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final browserPath = Uri.parse(web.window.location.href).path;
+    final browserUri = Uri.parse(web.window.location.href);
+    final browserPath = browserUri.path;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Ananta Organizers',
@@ -30,6 +34,10 @@ class MainApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.pageBackground,
       ),
       home: switch (browserPath) {
+        '/paydesk' => PaydeskPage(
+          product: PaydeskProduct.fromCode(browserUri.queryParameters['prod']),
+        ),
+        '/paymentgateway' => const PaydeskPage(product: PaydeskProduct.oneAct),
         '/rangaksh/themes' => const RangakshPage(initialSection: 'themes'),
         '/rangaksh' => const RangakshPage(),
         '/secretariat' => const SecretariatApplicationFormScreen(),
@@ -43,6 +51,23 @@ class MainApp extends StatelessWidget {
         '/secretariat': (_) => const SecretariatApplicationFormScreen(),
         '/participant': (_) => const ParticipantForm(),
         '/one-act': (_) => const OneActPage(),
+        '/paydesk': (_) => const PaydeskPage(product: PaydeskProduct.oneAct),
+        '/paymentgateway': (_) =>
+            const PaydeskPage(product: PaydeskProduct.oneAct),
+      },
+      onGenerateRoute: (settings) {
+        final uri = Uri.parse(settings.name ?? '');
+        if (uri.path == '/paydesk') {
+          final arguments = settings.arguments;
+          return MaterialPageRoute(
+            builder: (_) => PaydeskPage(
+              product: PaydeskProduct.fromCode(uri.queryParameters['prod']),
+              registration: arguments is OneActRegistration ? arguments : null,
+              visitor: arguments is VisitorPassRegistrant ? arguments : null,
+            ),
+          );
+        }
+        return null;
       },
     );
   }
