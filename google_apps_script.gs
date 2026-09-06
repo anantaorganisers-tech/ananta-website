@@ -3,6 +3,7 @@ const ONE_ACT_SHEET_NAME = 'OneAct';
 const ONE_ACT_BROCHURE_FOLDER_NAME = 'Rangaksh One Act Brochures';
 const VISITOR_PASS_SHEET_NAME = 'VisitorPass';
 const VISITOR_PASS_QR_FOLDER_NAME = 'Rangaksh Visitor Pass QR Codes';
+const SPONSOR_SHEET_NAME = 'Sponsors';
 const MAX_BROCHURE_BYTES = 10 * 1024 * 1024;
 const MAX_QR_IMAGE_BYTES = 2 * 1024 * 1024;
 
@@ -55,6 +56,19 @@ const VISITOR_PASS_HEADERS = [
   'Package',
 ];
 
+const SPONSOR_HEADERS = [
+  'Submitted At',
+  'Business/Shop Name',
+  'Owner Name',
+  'Contact Number',
+  'E-Mail Address',
+  'Sponsorship Package',
+  'Operational Address',
+  'Deliverables',
+  'Queries',
+  'Approval Status',
+];
+
 function doPost(e) {
   try {
     const payload = parsePayload_(e);
@@ -68,22 +82,15 @@ function doPost(e) {
     if (payload.formType === 'visitorPassQr') {
       return saveVisitorPassQr_(payload);
     }
+    if (payload.formType === 'sponsor') {
+      return saveSponsorApplication_(payload);
+    }
 
-    if (payload.formType === 'oneActPayment') {
-      return saveOneActPayment_(payload);
-    }
-    if (payload.formType === 'visitorPassPayment') {
-      return saveVisitorPassPayment_(payload);
-    }
-    if (payload.formType === 'visitorPassQr') {
-      return saveVisitorPassQr_(payload);
-    }
     return saveSecretariatApplication_(payload);
   } catch (error) {
     return jsonResponse_({
       success: false,
       message: error && error.message ? error.message : String(error),
-      message: String(error && error.message ? error.message : error),
     });
   }
 }
@@ -97,23 +104,6 @@ function authorizeOneActDrive() {
 function saveSecretariatApplication_(payload) {
   const sheet = getOrCreateSheet_(APPLICATIONS_SHEET_NAME);
   ensureHeaders_(sheet, APPLICATION_HEADERS);
-
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      'Submitted At',
-      'Name',
-      'Class',
-      'School',
-      'Contact Number',
-      'E-Mail Address',
-      'Address',
-      'Past Experience (If Any)',
-      'A Short Description of your Skillsets',
-      'How much time can you contribute to Rangaksh?',
-      'Preferred Department',
-      'Referral name from Team Rangaksh',
-    ]);
-  }
 
   sheet.appendRow([
     payload.submittedAt || new Date().toISOString(),
@@ -133,12 +123,33 @@ function saveSecretariatApplication_(payload) {
   return jsonResponse_({success: true});
 }
 
+function saveSponsorApplication_(payload) {
+  validateSponsorPayload_(payload);
+
+  const sheet = getOrCreateSheet_(SPONSOR_SHEET_NAME);
+  ensureHeaders_(sheet, SPONSOR_HEADERS);
+  sheet.appendRow([
+    payload.submittedAt || new Date().toISOString(),
+    payload.businessName || '',
+    payload.ownerName || '',
+    payload.contactNumber || '',
+    payload.emailAddress || '',
+    payload.sponsorshipPackage || '',
+    payload.operationalAddress || '',
+    payload.deliverables || '',
+    payload.queries || '',
+    'Pending',
+  ]);
+
+  return jsonResponse_({success: true, row: sheet.getLastRow()});
+}
+
 function saveOneActPayment_(payload) {
   validateOneActPayload_(payload);
 
   const sheet = getOrCreateSheet_(ONE_ACT_SHEET_NAME);
   ensureHeaders_(sheet, ONE_ACT_HEADERS);
-  if (transactionAlreadyRecorded_(sheet, payload.transactionId)) {
+  if (findMatchingRow_(sheet, 13, payload.transactionId)) {
     throw new Error('This transaction ID has already been recorded.');
   }
 
@@ -169,6 +180,7 @@ function saveOneActPayment_(payload) {
     .setFormula(
       '=HYPERLINK("' + escapeFormulaString_(brochureUrl) + '", "View PDF")',
     );
+
   return jsonResponse_({success: true, row: row});
 }
 
@@ -179,26 +191,19 @@ function saveVisitorPassPayment_(payload) {
   ensureHeaders_(sheet, VISITOR_PASS_HEADERS);
   const existingRow = findMatchingRow_(sheet, 7, payload.transactionId);
   if (existingRow) {
+    const existingPassId = sheet.getRange(existingRow, 2).getDisplayValue();
     const qrLink = sheet.getRange(existingRow, 11).getDisplayValue();
     if (!qrLink) {
-      // Recover records created by the earlier two-request pass flow.
-      sheet.getRange(existingRow, 2).setValue(payload.passId);
       saveVisitorPassQrAtRow_(
         sheet,
         existingRow,
-        payload.passId,
+        existingPassId || payload.passId,
         payload.qrImageBase64,
       );
-      return jsonResponse_({
-        success: true,
-        passId: payload.passId,
-        repaired: true,
-      });
-      return jsonResponse_({success: true, passId: payload.passId, repaired: true});
     }
     return jsonResponse_({
       success: true,
-      passId: sheet.getRange(existingRow, 2).getDisplayValue(),
+      passId: existingPassId || payload.passId,
       existing: true,
     });
   }
@@ -222,11 +227,8 @@ function saveVisitorPassPayment_(payload) {
     recordedAt,
     '',
     payload.packageName || '',
-    120,
-    'Payment details submitted',
-    recordedAt,
-    '',
   ]);
+
   saveVisitorPassQrAtRow_(
     sheet,
     sheet.getLastRow(),
@@ -274,8 +276,24 @@ function saveVisitorPassQrAtRow_(sheet, row, passId, qrImageBase64) {
     );
 }
 
+function validateSponsorPayload_(payload) {
+  [
+    'businessName',
+    'ownerName',
+    'contactNumber',
+    'emailAddress',
+    'sponsorshipPackage',
+    'operationalAddress',
+    'deliverables',
+  ].forEach(function (field) {
+    if (!payload[field]) {
+      throw new Error('Missing required field: ' + field);
+    }
+  });
+}
+
 function validateOneActPayload_(payload) {
-  const requiredFields = [
+  [
     'directorName',
     'category',
     'school',
@@ -287,8 +305,7 @@ function validateOneActPayload_(payload) {
     'brochureBase64',
     'upiId',
     'transactionId',
-  ];
-  requiredFields.forEach(function (field) {
+  ].forEach(function (field) {
     if (!payload[field]) {
       throw new Error('Missing required field: ' + field);
     }
@@ -328,7 +345,6 @@ function saveBrochure_(payload) {
   const name = new Date().getTime() + '_' + safeFileName_(payload.brochureName);
   const blob = Utilities.newBlob(brochureBytes, MimeType.PDF, name);
   const file = folder.createFile(blob);
-
   shareFileWithLink_(file);
 
   return file.getUrl();
@@ -349,8 +365,6 @@ function getOrCreateVisitorPassQrFolder_() {
 }
 
 function shareFileWithLink_(file) {
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  // Link access lets organisers open uploaded files directly from the sheet.
   try {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   } catch (error) {
@@ -371,74 +385,22 @@ function ensureHeaders_(sheet, headers) {
   if (sheet.getLastRow() !== 0) {
     return;
   }
-
-  const activeSheet = spreadsheet.getActiveSheet();
-  if (
-    sheetName === APPLICATIONS_SHEET_NAME &&
-    spreadsheet.getSheets().length === 1 &&
-    activeSheet &&
-    activeSheet.getLastRow() === 0
-  ) {
-    activeSheet.setName(sheetName);
-    return activeSheet;
-  }
-
-  return spreadsheet.insertSheet(sheetName);
-}
-
-function ensureHeaders_(sheet, headers) {
-  if (sheet.getLastRow() !== 0) {
-    return;
-  }
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.setFrozenRows(1);
 }
 
-function transactionAlreadyRecorded_(sheet, transactionId) {
-  return Boolean(findMatchingRow_(sheet, 13, transactionId));
-}
-
 function findMatchingRow_(sheet, column, value) {
   if (!value || sheet.getLastRow() < 2) {
-    return null;
-  }
-  const values = sheet
-    .getRange(2, column, sheet.getLastRow() - 1, 1)
-    .getDisplayValues();
-  for (let index = 0; index < values.length; index++) {
-    if (values[index][0] === String(value)) {
-      return index + 2;
-    }
-  }
-  return null;
-  const firstDataRow = 2;
-  const transactionColumn = 13;
-  const dataRowCount = sheet.getLastRow() - 1;
-  if (dataRowCount <= 0) {
-    return false;
-  }
-
-  const recordedTransactions = sheet
-    .getRange(firstDataRow, transactionColumn, dataRowCount, 1)
-    .getDisplayValues();
-  return recordedTransactions.some(function (row) {
-    return row[0].trim() === String(transactionId).trim();
-  });
-}
-
-function findMatchingRow_(sheet, column, value) {
-  const firstDataRow = 2;
-  const dataRowCount = sheet.getLastRow() - 1;
-  if (dataRowCount <= 0) {
     return 0;
   }
+
   const values = sheet
-    .getRange(firstDataRow, column, dataRowCount, 1)
+    .getRange(2, column, sheet.getLastRow() - 1, 1)
     .getDisplayValues();
   const target = String(value).trim();
   for (let index = 0; index < values.length; index++) {
     if (values[index][0].trim() === target) {
-      return firstDataRow + index;
+      return index + 2;
     }
   }
   return 0;
@@ -464,23 +426,12 @@ function parsePayload_(e) {
 function safeFileName_(value) {
   return String(value || 'upload')
     .replace(/[\\/:*?"<>|#%{}~&]/g, '_')
+    .replace(/^\.+/, '')
     .substring(0, 120);
 }
 
 function escapeFormulaString_(value) {
   return String(value || '').replace(/"/g, '""');
-  return e && e.parameter ? e.parameter : {};
-}
-
-function safeFileName_(fileName) {
-  return (
-    String(fileName).replace(/[^a-zA-Z0-9._ -]/g, '_').replace(/^\.+/, '') ||
-    'brochure.pdf'
-  );
-}
-
-function escapeFormulaString_(value) {
-  return String(value).replace(/"/g, '""');
 }
 
 function jsonResponse_(body) {

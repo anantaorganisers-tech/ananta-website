@@ -37,7 +37,7 @@ class OneActSubmissionService {
   OneActSubmissionService._();
 
   static const googleAppsScriptUrl =
-      'https://script.google.com/macros/s/AKfycbxooheG6-RCJZ-4XK3VDcsmNn3CRriEnO9Le3lpN7JtGVq3KHUjuon4hFs_KV2LFPAM/exec';
+      'https://script.google.com/macros/s/AKfycbyQ3nFnWSL_P13BkHyPnmiOd78S5TXyxhFyLRJqnzg5gNaJxGCbdb60zJrOzg_aFtk/exec';
 
   static Future<void> submitPayment({
     required OneActRegistration registration,

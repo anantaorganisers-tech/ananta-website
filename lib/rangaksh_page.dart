@@ -326,7 +326,7 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 412,
+              top: 402,
               left: 0,
               right: 0,
               child: Row(
@@ -342,6 +342,17 @@ class _MobileHeroContent extends StatelessWidget {
                     onTap: () => openRouteInNewTab('/one-act'),
                   ),
                 ],
+              ),
+            ),
+            Positioned(
+              top: 462,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _CompactHeroButton(
+                  label: 'Sponsor Us',
+                  onTap: () => openRouteInNewTab('/sponsor-form'),
+                ),
               ),
             ),
           ],
@@ -408,6 +419,11 @@ class _HeroContent extends StatelessWidget {
                           label: 'JOIN AS SECRETARIAT',
                           onTap: onJoin,
                         ),
+                        const SizedBox(height: 14),
+                        _HeroButton(
+                          label: 'SPONSOR US',
+                          onTap: () => openRouteInNewTab('/sponsor-form'),
+                        ),
                       ],
                     )
                   : Row(
@@ -421,6 +437,11 @@ class _HeroContent extends StatelessWidget {
                         _HeroButton(
                           label: 'JOIN AS SECRETARIAT',
                           onTap: onJoin,
+                        ),
+                        const SizedBox(width: 22),
+                        _HeroButton(
+                          label: 'SPONSOR US',
+                          onTap: () => openRouteInNewTab('/sponsor-form'),
                         ),
                       ],
                     ),
@@ -1517,7 +1538,7 @@ class _DjGarbaGlassPanel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '₹120 per person',
+          '₹150 per person',
           style: GoogleFonts.montserrat(
             color: SiteColors.cream,
             fontSize: mobile ? 15 : 19,
@@ -1615,7 +1636,7 @@ class _DjGarbaPassButton extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Secure your pass now at ₹120!',
+                    'Secure your pass now at ₹150!',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.montserrat(
@@ -1718,7 +1739,7 @@ class _DjGarbaPassDetailsSheetState extends State<_DjGarbaPassDetailsSheet> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '₹120 per person',
+                      '₹150 per person',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.montserrat(
                         color: SiteColors.cream.withValues(alpha: .75),
@@ -1972,6 +1993,12 @@ class JoinUsSection extends StatelessWidget {
                   subtitle:
                       'Get behind the curtain and be a part of the Organising Team',
                   onTap: () => openRouteInNewTab('/secretariat'),
+                ),
+                const SizedBox(height: 14),
+                _JoinUsCard(
+                  title: 'Become a Sponsor',
+                  subtitle: 'Partner with Rangaksh',
+                  onTap: () => openRouteInNewTab('/sponsor-form'),
                 ),
               ],
             );
