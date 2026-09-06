@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
+import 'visitor_pass_submission.dart';
 import 'web_navigation.dart';
 
 class RangakshPage extends StatefulWidget {
@@ -62,7 +64,10 @@ class _RangakshPageState extends State<RangakshPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: CompetitionAppBar(showRangakshLogo: _showAppBarRangakshLogo),
+      appBar: CompetitionAppBar(
+        showRangakshLogo: _showAppBarRangakshLogo,
+        hideOrganizerNameOnMobile: true,
+      ),
       body: NotificationListener<ScrollNotification>(
         onNotification: _handleScroll,
         child: CustomScrollView(
@@ -85,6 +90,9 @@ class _RangakshPageState extends State<RangakshPage> {
             ),
             SliverToBoxAdapter(
               child: ScrollReveal(child: ThemeSection(key: _themeKey)),
+            ),
+            const SliverToBoxAdapter(
+              child: ScrollReveal(child: DjGarbaSection()),
             ),
             SliverToBoxAdapter(
               child: ScrollReveal(
@@ -1386,6 +1394,465 @@ class _CarouselArrow extends StatelessWidget {
       ),
       child: Icon(icon, size: 22),
     ),
+  );
+}
+
+class DjGarbaSection extends StatelessWidget {
+  const DjGarbaSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final mobile = size.width < 768;
+    final height = mobile
+        ? 820.0
+        : size.height < 1080
+        ? 1080.0
+        : size.height;
+
+    return SizedBox(
+      height: height,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'lib/assets/djgarba_herobg.png',
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.high,
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: .25),
+                  Colors.black.withValues(alpha: .53),
+                ],
+              ),
+            ),
+          ),
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: mobile ? 22 : 54,
+                vertical: mobile ? 64 : 96,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1420),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'DJ & GARBA NIGHT',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        color: SiteColors.cream,
+                        fontSize: mobile ? 32 : 52,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: mobile ? 0 : 1,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'WHERE EVERY STEP TELLS A STORY',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        color: SiteColors.cream,
+                        fontSize: mobile ? 10 : 14,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: mobile ? 1.6 : 2.8,
+                      ),
+                    ),
+                    SizedBox(height: mobile ? 44 : 72),
+                    _DjGarbaGlassPanel(mobile: mobile),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DjGarbaGlassPanel extends StatelessWidget {
+  const _DjGarbaGlassPanel({required this.mobile});
+
+  final bool mobile;
+
+  @override
+  Widget build(BuildContext context) {
+    const radius = BorderRadius.all(Radius.circular(18));
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'DRESS CODE:',
+          style: GoogleFonts.montserrat(
+            color: SiteColors.cream,
+            fontSize: mobile ? 22 : 28,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Traditional Wear',
+          style: GoogleFonts.montserrat(
+            color: SiteColors.cream,
+            fontSize: mobile ? 15 : 19,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: mobile ? 24 : 34),
+        Text(
+          'JOINING FEE:',
+          style: GoogleFonts.montserrat(
+            color: SiteColors.cream,
+            fontSize: mobile ? 22 : 28,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '₹120 per person',
+          style: GoogleFonts.montserrat(
+            color: SiteColors.cream,
+            fontSize: mobile ? 15 : 19,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: mobile ? 26 : 38),
+        const _DjGarbaPassButton(),
+      ],
+    );
+    final description = Text(
+      'Step into a night where tradition meets the pulse of a new generation with an electrifying DJ & Garba experience, blending the timeless energy of Navratri with contemporary beats, vibrant rhythms, and an atmosphere made for celebration. This Navratri, the stage isn\'t just for stories - it\'s for you.',
+      style: GoogleFonts.montserrat(
+        color: SiteColors.cream,
+        fontSize: mobile ? 14 : 17,
+        height: 1.43,
+        fontWeight: FontWeight.w400,
+      ),
+    );
+
+    return ClipRRect(
+      borderRadius: radius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(mobile ? 26 : 42),
+          decoration: BoxDecoration(
+            color: const Color(0x551B120E),
+            borderRadius: radius,
+            border: Border.all(color: SiteColors.cream.withValues(alpha: .68)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x66000000),
+                blurRadius: 24,
+                offset: Offset(0, 12),
+              ),
+            ],
+          ),
+          child: mobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    details,
+                    const SizedBox(height: 30),
+                    Divider(
+                      color: SiteColors.gold.withValues(alpha: .78),
+                      height: 1,
+                    ),
+                    const SizedBox(height: 30),
+                    description,
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(flex: 5, child: details),
+                    Container(
+                      width: 2,
+                      height: 290,
+                      margin: const EdgeInsets.symmetric(horizontal: 48),
+                      color: SiteColors.gold.withValues(alpha: .78),
+                    ),
+                    Expanded(flex: 6, child: description),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DjGarbaPassButton extends StatelessWidget {
+  const _DjGarbaPassButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 768;
+    return HoverLift(
+      child: SizedBox(
+        width: mobile ? double.infinity : 360,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openDjGarbaPaydesk(context),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .06),
+              border: Border.all(
+                color: SiteColors.cream.withValues(alpha: .62),
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Secure your pass now at ₹120!',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.montserrat(
+                      color: SiteColors.cream,
+                      fontSize: mobile ? 14 : 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                SizedBox(width: mobile ? 12 : 28),
+                Icon(
+                  Icons.north_east_rounded,
+                  color: SiteColors.cream,
+                  size: mobile ? 22 : 25,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _openDjGarbaPaydesk(BuildContext context) async {
+  final visitor = await showModalBottomSheet<VisitorPassRegistrant>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const _DjGarbaPassDetailsSheet(),
+  );
+  if (!context.mounted || visitor == null) return;
+
+  Navigator.of(context).pushNamed('/paydesk?prod=dj-garba', arguments: visitor);
+}
+
+class _DjGarbaPassDetailsSheet extends StatefulWidget {
+  const _DjGarbaPassDetailsSheet();
+
+  @override
+  State<_DjGarbaPassDetailsSheet> createState() =>
+      _DjGarbaPassDetailsSheetState();
+}
+
+class _DjGarbaPassDetailsSheetState extends State<_DjGarbaPassDetailsSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
+
+  void _continueToPayment() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.pop(
+      context,
+      VisitorPassRegistrant(
+        name: _name.text.trim(),
+        emailAddress: _email.text.trim(),
+        phoneNumber: _phone.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomInset),
+        child: Material(
+          color: const Color(0xFF501221),
+          borderRadius: BorderRadius.circular(22),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'GET YOUR DJ & GARBA PASS',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        color: SiteColors.cream,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '₹120 per person',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        color: SiteColors.cream.withValues(alpha: .75),
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    _DjGarbaPassField(
+                      label: 'Full Name',
+                      controller: _name,
+                      validator: (value) => (value?.trim().length ?? 0) >= 2
+                          ? null
+                          : 'Enter your full name',
+                    ),
+                    const SizedBox(height: 18),
+                    _DjGarbaPassField(
+                      label: 'E-Mail Address',
+                      controller: _email,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) =>
+                          RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value ?? '')
+                          ? null
+                          : 'Enter a valid email address',
+                    ),
+                    const SizedBox(height: 18),
+                    _DjGarbaPassField(
+                      label: 'Phone Number',
+                      controller: _phone,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      validator: (value) =>
+                          RegExp(r'^\d{10}$').hasMatch(value ?? '')
+                          ? null
+                          : 'Enter a valid 10-digit phone number',
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _continueToPayment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF201713),
+                          foregroundColor: SiteColors.cream,
+                          side: const BorderSide(color: SiteColors.gold),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'CONTINUE TO PAYMENT',
+                          style: GoogleFonts.montserrat(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DjGarbaPassField extends StatelessWidget {
+  const _DjGarbaPassField({
+    required this.label,
+    required this.controller,
+    required this.validator,
+    this.keyboardType,
+    this.inputFormatters,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final String? Function(String?) validator;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: GoogleFonts.montserrat(
+          color: SiteColors.cream,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      const SizedBox(height: 9),
+      TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        validator: validator,
+        style: GoogleFonts.montserrat(color: SiteColors.cream),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: const Color(0xFF3F0D1A),
+          errorStyle: GoogleFonts.montserrat(color: Colors.white, fontSize: 11),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 13,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: BorderSide(
+              color: SiteColors.cream.withValues(alpha: .38),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: SiteColors.gold),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: Color(0xFFE0A8A8)),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: Color(0xFFE0A8A8)),
+          ),
+        ),
+      ),
+    ],
   );
 }
 

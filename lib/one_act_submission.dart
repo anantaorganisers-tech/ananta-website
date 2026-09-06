@@ -15,6 +15,7 @@ class OneActRegistration {
     required this.teamMembers,
     required this.referralName,
     required this.brochureName,
+    required this.brochureMimeType,
     required this.brochureBytes,
   });
 
@@ -28,6 +29,7 @@ class OneActRegistration {
   final String teamMembers;
   final String referralName;
   final String brochureName;
+  final String brochureMimeType;
   final Uint8List brochureBytes;
 }
 
@@ -36,6 +38,7 @@ class OneActSubmissionService {
 
   static const googleAppsScriptUrl =
       'https://script.google.com/macros/s/AKfycbx-4qyjBLhoUTJHZe8XCXsLtoMEyXCRVbttgGNfC8qx5HOeMR5smCfYE4GRqYJFYfBg/exec';
+      'https://script.google.com/macros/s/AKfycbxooheG6-RCJZ-4XK3VDcsmNn3CRriEnO9Le3lpN7JtGVq3KHUjuon4hFs_KV2LFPAM/exec';
 
   static Future<void> submitPayment({
     required OneActRegistration registration,
@@ -57,6 +60,7 @@ class OneActSubmissionService {
         'teamMembers': registration.teamMembers,
         'referralName': registration.referralName,
         'brochureName': registration.brochureName,
+        'brochureMimeType': registration.brochureMimeType,
         'brochureBase64': base64Encode(registration.brochureBytes),
         'upiId': upiId,
         'transactionId': transactionId,
@@ -74,6 +78,7 @@ class OneActSubmissionService {
       if (body['success'] != true) {
         throw OneActSubmissionException(
           body['message']?.toString() ?? 'The payment could not be recorded.',
+          body['message']?.toString() ?? 'The registration could not be saved.',
         );
       }
     } on FormatException {

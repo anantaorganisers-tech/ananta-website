@@ -26,6 +26,8 @@ class _ParticipantFormState extends State<ParticipantForm> {
   String? _category;
   String? _brochureName;
   Uint8List? _brochureBytes;
+  PlatformFile? _brochure;
+  bool _showBrochureError = false;
 
   @override
   void dispose() {
@@ -44,6 +46,20 @@ class _ParticipantFormState extends State<ParticipantForm> {
     super.dispose();
   }
 
+  Future<void> _pickBrochure() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf'],
+      withData: true,
+    );
+    if (!mounted || result == null) return;
+
+    setState(() {
+      _brochure = result.files.single;
+      _showBrochureError = false;
+    });
+  }
+
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_brochureBytes == null || _brochureName == null) {
@@ -56,6 +72,20 @@ class _ParticipantFormState extends State<ParticipantForm> {
     final registration = OneActRegistration(
       directorName: _directorName.text.trim(),
       category: _category!,
+    final brochure = _brochure;
+    if (brochure == null || brochure.bytes == null) {
+      setState(() => _showBrochureError = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload your play brochure as a PDF.'),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
+    final registration = OneActRegistration(
+      directorName: _directorName.text.trim(),
+      category: _category ?? '',
       school: _school.text.trim(),
       contactNumber: _contact.text.trim(),
       emailAddress: _email.text.trim(),
@@ -91,6 +121,13 @@ class _ParticipantFormState extends State<ParticipantForm> {
       _brochureName = file.name;
       _brochureBytes = file.bytes;
     });
+      brochureName: brochure.name,
+      brochureMimeType: 'application/pdf',
+      brochureBytes: brochure.bytes!,
+    );
+    Navigator.of(
+      context,
+    ).pushNamed('/paydesk?prod=one-act', arguments: registration);
   }
 
   @override
@@ -218,6 +255,16 @@ class _ParticipantFormState extends State<ParticipantForm> {
                           label: 'Brochure of your Play (PDF)',
                           fileName: _brochureName,
                           onTap: _pickBrochure,
+                        _BrochureUploadField(
+                          brochure: _brochure,
+                          showError: _showBrochureError,
+                          onPick: _pickBrochure,
+                          onRemove: _brochure == null
+                              ? null
+                              : () => setState(() {
+                                  _brochure = null;
+                                  _showBrochureError = false;
+                                }),
                         ),
                         SizedBox(height: 28 * scale),
                         _Field(
@@ -283,6 +330,139 @@ class _ParticipantFormState extends State<ParticipantForm> {
   }
 }
 
+class _BrochureUploadField extends StatelessWidget {
+  const _BrochureUploadField({
+    required this.brochure,
+    required this.showError,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final PlatformFile? brochure;
+  final bool showError;
+  final VoidCallback onPick;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _formScale(context);
+    final selected = brochure != null;
+    final borderColor = showError
+        ? const Color(0xFFE0A8A8)
+        : selected
+        ? _ParticipantColors.gold
+        : const Color(0xFF8D4B55);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Brochure of your Play (PDF)',
+          style: GoogleFonts.montserrat(
+            color: _ParticipantColors.cream,
+            fontSize: 16 * scale,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 12 * scale),
+        OutlinedButton(
+          onPressed: onPick,
+          style: OutlinedButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            minimumSize: Size.fromHeight(112 * scale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 18 * scale,
+              vertical: 14 * scale,
+            ),
+            backgroundColor: _ParticipantColors.field,
+            foregroundColor: _ParticipantColors.cream,
+            side: BorderSide(color: borderColor),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.picture_as_pdf_rounded
+                    : Icons.upload_file_rounded,
+                size: 30 * scale,
+                color: selected
+                    ? _ParticipantColors.gold
+                    : _ParticipantColors.cream,
+              ),
+              SizedBox(width: 14 * scale),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      selected ? brochure!.name : 'Choose your PDF brochure',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 5 * scale),
+                    Text(
+                      selected
+                          ? '${_formatFileSize(brochure!.size)} ready for submission'
+                          : 'PDF files only',
+                      style: GoogleFonts.montserrat(
+                        color: _ParticipantColors.cream.withValues(alpha: .72),
+                        fontSize: 12 * scale,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.north_east_rounded, size: 20 * scale),
+            ],
+          ),
+        ),
+        if (selected)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: onRemove,
+              icon: Icon(Icons.close_rounded, size: 16 * scale),
+              label: Text(
+                'Remove file',
+                style: GoogleFonts.montserrat(fontSize: 12 * scale),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: _ParticipantColors.cream.withValues(
+                  alpha: .82,
+                ),
+              ),
+            ),
+          ),
+        if (showError)
+          Padding(
+            padding: EdgeInsets.only(top: 8 * scale, left: 12 * scale),
+            child: Text(
+              'Please upload your play brochure as a PDF.',
+              style: GoogleFonts.montserrat(
+                color: Colors.white,
+                fontSize: 12 * scale,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+String _formatFileSize(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+}
+
 class _Field extends StatelessWidget {
   const _Field({
     required this.label,
@@ -330,6 +510,10 @@ class _Field extends StatelessWidget {
           decoration: InputDecoration(
             filled: true,
             fillColor: _ParticipantColors.field,
+            errorStyle: GoogleFonts.montserrat(
+              color: Colors.white,
+              fontSize: 12 * scale,
+            ),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16 * scale,
               vertical: 15 * scale,
@@ -387,6 +571,10 @@ class _CategoryField extends StatelessWidget {
           decoration: InputDecoration(
             filled: true,
             fillColor: _ParticipantColors.field,
+            errorStyle: GoogleFonts.montserrat(
+              color: Colors.white,
+              fontSize: 12 * scale,
+            ),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16 * scale,
               vertical: 15 * scale,

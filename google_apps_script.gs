@@ -69,11 +69,21 @@ function doPost(e) {
       return saveVisitorPassQr_(payload);
     }
 
+    if (payload.formType === 'oneActPayment') {
+      return saveOneActPayment_(payload);
+    }
+    if (payload.formType === 'visitorPassPayment') {
+      return saveVisitorPassPayment_(payload);
+    }
+    if (payload.formType === 'visitorPassQr') {
+      return saveVisitorPassQr_(payload);
+    }
     return saveSecretariatApplication_(payload);
   } catch (error) {
     return jsonResponse_({
       success: false,
       message: error && error.message ? error.message : String(error),
+      message: String(error && error.message ? error.message : error),
     });
   }
 }
@@ -87,6 +97,23 @@ function authorizeOneActDrive() {
 function saveSecretariatApplication_(payload) {
   const sheet = getOrCreateSheet_(APPLICATIONS_SHEET_NAME);
   ensureHeaders_(sheet, APPLICATION_HEADERS);
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'Submitted At',
+      'Name',
+      'Class',
+      'School',
+      'Contact Number',
+      'E-Mail Address',
+      'Address',
+      'Past Experience (If Any)',
+      'A Short Description of your Skillsets',
+      'How much time can you contribute to Rangaksh?',
+      'Preferred Department',
+      'Referral name from Team Rangaksh',
+    ]);
+  }
 
   sheet.appendRow([
     payload.submittedAt || new Date().toISOString(),
@@ -142,6 +169,7 @@ function saveOneActPayment_(payload) {
     .setFormula(
       '=HYPERLINK("' + escapeFormulaString_(brochureUrl) + '", "View PDF")',
     );
+    .setFormula('=HYPERLINK("' + escapeFormulaString_(brochureUrl) + '", "View PDF")');
 
   return jsonResponse_({success: true, row: row});
 }
@@ -155,6 +183,7 @@ function saveVisitorPassPayment_(payload) {
   if (existingRow) {
     const qrLink = sheet.getRange(existingRow, 11).getDisplayValue();
     if (!qrLink) {
+      // Recover records created by the earlier two-request pass flow.
       sheet.getRange(existingRow, 2).setValue(payload.passId);
       saveVisitorPassQrAtRow_(
         sheet,
@@ -167,6 +196,7 @@ function saveVisitorPassPayment_(payload) {
         passId: payload.passId,
         repaired: true,
       });
+      return jsonResponse_({success: true, passId: payload.passId, repaired: true});
     }
     return jsonResponse_({
       success: true,
@@ -194,6 +224,10 @@ function saveVisitorPassPayment_(payload) {
     recordedAt,
     '',
     payload.packageName || '',
+    120,
+    'Payment details submitted',
+    recordedAt,
+    '',
   ]);
   saveVisitorPassQrAtRow_(
     sheet,
@@ -240,6 +274,7 @@ function saveVisitorPassQrAtRow_(sheet, row, passId, qrImageBase64) {
         escapeFormulaString_(file.getUrl()) +
         '", "View QR screenshot")',
     );
+    .setFormula('=HYPERLINK("' + escapeFormulaString_(file.getUrl()) + '", "View QR screenshot")');
 }
 
 function validateOneActPayload_(payload) {
@@ -284,6 +319,13 @@ function validateVisitorPassPayload_(payload) {
   if (![50, 150, 200].includes(amount)) {
     throw new Error('Invalid visitor pass amount.');
   }
+  ].forEach(
+    function (field) {
+      if (!payload[field]) {
+        throw new Error('Missing required field: ' + field);
+      }
+    },
+  );
 }
 
 function saveBrochure_(payload) {
@@ -318,6 +360,12 @@ function getOrCreateVisitorPassQrFolder_() {
 
 function shareFileWithLink_(file) {
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  // Link access lets organisers open uploaded files directly from the sheet.
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (error) {
+    console.warn('Could not enable link sharing for file: ' + error);
+  }
 }
 
 function getOrCreateSheet_(sheetName) {
@@ -326,6 +374,25 @@ function getOrCreateSheet_(sheetName) {
   if (existing) {
     return existing;
   }
+  return spreadsheet.insertSheet(sheetName);
+}
+
+function ensureHeaders_(sheet, headers) {
+  if (sheet.getLastRow() !== 0) {
+    return;
+  }
+
+  const activeSheet = spreadsheet.getActiveSheet();
+  if (
+    sheetName === APPLICATIONS_SHEET_NAME &&
+    spreadsheet.getSheets().length === 1 &&
+    activeSheet &&
+    activeSheet.getLastRow() === 0
+  ) {
+    activeSheet.setName(sheetName);
+    return activeSheet;
+  }
+
   return spreadsheet.insertSheet(sheetName);
 }
 
@@ -354,6 +421,37 @@ function findMatchingRow_(sheet, column, value) {
     }
   }
   return null;
+  const firstDataRow = 2;
+  const transactionColumn = 13;
+  const dataRowCount = sheet.getLastRow() - 1;
+  if (dataRowCount <= 0) {
+    return false;
+  }
+
+  const recordedTransactions = sheet
+    .getRange(firstDataRow, transactionColumn, dataRowCount, 1)
+    .getDisplayValues();
+  return recordedTransactions.some(function (row) {
+    return row[0].trim() === String(transactionId).trim();
+  });
+}
+
+function findMatchingRow_(sheet, column, value) {
+  const firstDataRow = 2;
+  const dataRowCount = sheet.getLastRow() - 1;
+  if (dataRowCount <= 0) {
+    return 0;
+  }
+  const values = sheet
+    .getRange(firstDataRow, column, dataRowCount, 1)
+    .getDisplayValues();
+  const target = String(value).trim();
+  for (let index = 0; index < values.length; index++) {
+    if (values[index][0].trim() === target) {
+      return firstDataRow + index;
+    }
+  }
+  return 0;
 }
 
 function parsePayload_(e) {
@@ -381,6 +479,18 @@ function safeFileName_(value) {
 
 function escapeFormulaString_(value) {
   return String(value || '').replace(/"/g, '""');
+  return e && e.parameter ? e.parameter : {};
+}
+
+function safeFileName_(fileName) {
+  return (
+    String(fileName).replace(/[^a-zA-Z0-9._ -]/g, '_').replace(/^\.+/, '') ||
+    'brochure.pdf'
+  );
+}
+
+function escapeFormulaString_(value) {
+  return String(value).replace(/"/g, '""');
 }
 
 function jsonResponse_(body) {

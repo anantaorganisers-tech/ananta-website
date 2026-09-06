@@ -15,6 +15,7 @@ class AnantaPage extends StatefulWidget {
 
 class _AnantaPageState extends State<AnantaPage> {
   final _foundersKey = GlobalKey();
+  final _eventsKey = GlobalKey();
   final _contactKey = GlobalKey();
 
   void _scrollTo(GlobalKey key) {
@@ -35,7 +36,7 @@ class _AnantaPageState extends State<AnantaPage> {
       appBar: AnantaPortfolioAppBar(
         mobile: mobile,
         onFounders: () => _scrollTo(_foundersKey),
-        onEvents: () => openRouteInNewTab('/rangaksh'),
+        onEvents: () => _scrollTo(_eventsKey),
         onContact: () => _scrollTo(_contactKey),
       ),
       body: CustomScrollView(
@@ -49,8 +50,10 @@ class _AnantaPageState extends State<AnantaPage> {
               child: _FoundersSection(key: _foundersKey),
             ),
           ),
-          const SliverToBoxAdapter(
-            child: _PortfolioScrollReveal(child: _EventsSection()),
+          SliverToBoxAdapter(
+            child: _PortfolioScrollReveal(
+              child: _EventsSection(key: _eventsKey),
+            ),
           ),
           SliverToBoxAdapter(
             child: _PortfolioScrollReveal(
@@ -222,7 +225,7 @@ class _AnantaHero extends StatelessWidget {
                               ? 34
                               : tablet
                               ? 48
-                              : 58,
+                              : 64,
                           height: 1.08,
                           fontWeight: FontWeight.w700,
                           letterSpacing: mobile ? -.8 : -1.3,
@@ -234,7 +237,7 @@ class _AnantaHero extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.montserrat(
                           color: _AnantaColors.cream.withValues(alpha: .88),
-                          fontSize: mobile ? 14 : 18,
+                          fontSize: mobile ? 14 : 20,
                           height: 1.45,
                           fontWeight: FontWeight.w400,
                         ),
@@ -306,7 +309,7 @@ class _LatestEventButton extends StatelessWidget {
                       'Have a look at our latest event',
                       style: GoogleFonts.montserrat(
                         color: _AnantaColors.cream,
-                        fontSize: compact ? 11 : 12,
+                        fontSize: compact ? 11 : 20,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -454,14 +457,14 @@ class _WhatAreWeSection extends StatelessWidget {
                               'WHAT\nARE\nWE?',
                               style: GoogleFonts.montserrat(
                                 color: _AnantaColors.cream,
-                                fontSize: compact ? 50 : 54,
+                                fontSize: compact ? 50 : 74,
                                 height: .99,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
                           SizedBox(width: compact ? 20 : 58),
-                          Expanded(flex: compact ? 7 : 8, child: copy),
+                          Expanded(flex: compact ? 7 : 10, child: copy),
                         ],
                       ),
               ),
@@ -478,7 +481,9 @@ class _FoundersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 768;
+    final width = MediaQuery.sizeOf(context).width;
+    final mobile = width < 768;
+    final scale = width >= 1100 ? 1.5 : 1.0;
     const founders = [
       _Founder(
         imagePath: 'lib/assets/ananta_portf/adivisor_card.png',
@@ -500,14 +505,14 @@ class _FoundersSection extends StatelessWidget {
     return Container(
       color: _AnantaColors.section,
       padding: EdgeInsets.fromLTRB(
-        mobile ? 28 : 54,
-        mobile ? 74 : 106,
-        mobile ? 28 : 54,
-        mobile ? 82 : 118,
+        mobile ? 28 : 54 * scale,
+        mobile ? 74 : 106 * scale,
+        mobile ? 28 : 54 * scale,
+        mobile ? 82 : 118 * scale,
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1080),
+          constraints: BoxConstraints(maxWidth: 1080 * scale),
           child: Column(
             children: [
               Text(
@@ -515,18 +520,18 @@ class _FoundersSection extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.montserrat(
                   color: _AnantaColors.cream,
-                  fontSize: mobile ? 28 : 40,
+                  fontSize: (mobile ? 28 : 40) * scale,
                   fontWeight: FontWeight.w700,
                   letterSpacing: mobile ? 0 : .4,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16 * scale),
               const _SectionDivider(),
-              SizedBox(height: mobile ? 36 : 54),
+              SizedBox(height: (mobile ? 36 : 54) * scale),
               for (var index = 0; index < founders.length; index++) ...[
                 _FounderRow(founder: founders[index], mobile: mobile),
                 if (index < founders.length - 1)
-                  SizedBox(height: mobile ? 56 : 68),
+                  SizedBox(height: (mobile ? 56 : 68) * scale),
               ],
             ],
           ),
@@ -544,10 +549,11 @@ class _FounderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = _founderScale(context);
     final card = _PortfolioHoverLift(
       child: Image.asset(
         founder.imagePath,
-        width: mobile ? 190 : 246,
+        width: (mobile ? 190 : 246) * scale,
         filterQuality: FilterQuality.high,
       ),
     );
@@ -555,7 +561,7 @@ class _FounderRow extends StatelessWidget {
       founder.biography,
       style: GoogleFonts.montserrat(
         color: _AnantaColors.cream,
-        fontSize: mobile ? 14 : 16,
+        fontSize: (mobile ? 14 : 16) * scale,
         height: 1.35,
         fontWeight: FontWeight.w400,
       ),
@@ -566,7 +572,7 @@ class _FounderRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(child: card),
-              const SizedBox(height: 24),
+              SizedBox(height: 24 * scale),
               biography,
             ],
           )
@@ -574,7 +580,7 @@ class _FounderRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               card,
-              const SizedBox(width: 54),
+              SizedBox(width: 54 * scale),
               Expanded(child: biography),
             ],
           );
@@ -608,8 +614,11 @@ class _Founder {
   final String biography;
 }
 
+double _founderScale(BuildContext context) =>
+    MediaQuery.sizeOf(context).width >= 1100 ? 1.5 : 1;
+
 class _EventsSection extends StatelessWidget {
-  const _EventsSection();
+  const _EventsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -652,7 +661,7 @@ class _EventsSection extends StatelessWidget {
                   textAlign: TextAlign.left,
                   style: GoogleFonts.montserrat(
                     color: _AnantaColors.cream,
-                    fontSize: mobile ? 14 : 16,
+                    fontSize: mobile ? 14 : 20,
                     height: 1.38,
                     fontWeight: FontWeight.w400,
                   ),

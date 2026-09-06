@@ -13,6 +13,7 @@ import 'visitor_pass_submission.dart';
 enum PaydeskProduct {
   oneAct(code: 'one-act', heading: 'ONE ACT COMPETITION', amount: 800),
   djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 150);
+  djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 120);
 
   const PaydeskProduct({
     required this.code,
@@ -307,6 +308,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
                       children: [
                         Text(
                           _checkoutHeading,
+                          widget.product.heading,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             color: _PaymentColors.cream,
@@ -327,6 +329,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
                         ),
                         SizedBox(height: (mobile ? 44 : 58) * scale),
                         _QrPanel(amount: _payableAmount, scale: scale),
+                        _QrPanel(product: widget.product, scale: scale),
                         SizedBox(height: 34 * scale),
                         _PaymentField(
                           label: 'Enter UPI ID',
@@ -402,6 +405,9 @@ class _QrPanel extends StatelessWidget {
   const _QrPanel({required this.amount, required this.scale});
 
   final int amount;
+  const _QrPanel({required this.product, required this.scale});
+
+  final PaydeskProduct product;
   final double scale;
 
   @override
@@ -449,6 +455,7 @@ class _QrPanel extends StatelessWidget {
           SizedBox(height: 12 * scale),
           Text(
             'Amount to be paid: ₹$amount',
+            'Amount to be paid: ₹${product.amount}',
             textAlign: TextAlign.center,
             style: GoogleFonts.montserrat(
               color: _PaymentColors.cream,
