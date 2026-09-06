@@ -71,7 +71,10 @@ class _SponsorshipFormState extends State<SponsorshipForm> {
       if (!mounted) return;
       if (response.statusCode >= 200 && response.statusCode < 300) {
         await _showSuccessDialog();
-        if (mounted) _clearForm();
+        if (!mounted) return;
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/rangaksh', (route) => false);
       } else {
         _showMessage('Submission failed with status ${response.statusCode}.');
       }
@@ -82,18 +85,6 @@ class _SponsorshipFormState extends State<SponsorshipForm> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  void _clearForm() {
-    _formKey.currentState?.reset();
-    _businessController.clear();
-    _ownerController.clear();
-    _contactController.clear();
-    _emailController.clear();
-    _addressController.clear();
-    _deliverablesController.clear();
-    _queriesController.clear();
-    setState(() => _selectedPackage = null);
   }
 
   void _showMessage(String message) {

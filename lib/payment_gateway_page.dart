@@ -56,6 +56,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
   int get _payableAmount => widget.visitor?.amount ?? widget.product.amount;
   String get _checkoutHeading =>
       widget.visitor == null ? widget.product.heading : 'AUDIENCE TICKET';
+  String? get _checkoutPackageSummary => widget.visitor?.packageName;
 
   @override
   void dispose() {
@@ -165,7 +166,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
       12,
       (_) => alphabet[random.nextInt(alphabet.length)],
     ).join();
-    return 'DJG-$suffix';
+    return 'RNG-$suffix';
   }
 
   Future<void> _showOneActConfirmation() => showDialog<void>(
@@ -325,6 +326,19 @@ class _PaydeskPageState extends State<PaydeskPage> {
                             letterSpacing: 2.2,
                           ),
                         ),
+                        if (_checkoutPackageSummary != null) ...[
+                          SizedBox(height: 10 * scale),
+                          Text(
+                            _checkoutPackageSummary!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.montserrat(
+                              color: _PaymentColors.gold,
+                              fontSize: (mobile ? 11 : 12) * scale,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: .7,
+                            ),
+                          ),
+                        ],
                         SizedBox(height: (mobile ? 44 : 58) * scale),
                         _QrPanel(amount: _payableAmount, scale: scale),
                         SizedBox(height: 34 * scale),

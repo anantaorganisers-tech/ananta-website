@@ -3,8 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'web_navigation.dart';
-
 class OneActPage extends StatelessWidget {
   const OneActPage({super.key});
 
@@ -16,8 +14,9 @@ class OneActPage extends StatelessWidget {
         child: Column(
           children: [
             _CompetitionContent(
-              onRegister: () => openRouteInNewTab('/participant'),
-              onViewThemes: () => openRouteInNewTab('/rangaksh/themes'),
+              onRegister: () => Navigator.of(context).pushNamed('/participant'),
+              onViewThemes: () =>
+                  Navigator.of(context).pushNamed('/rangaksh/themes'),
             ),
             const _CompetitionFooter(),
           ],

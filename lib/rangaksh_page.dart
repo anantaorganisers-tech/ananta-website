@@ -74,7 +74,9 @@ class _RangakshPageState extends State<RangakshPage> {
           slivers: [
             SliverToBoxAdapter(
               child: ScrollReveal(
-                child: HeroSection(onJoin: () => _scrollTo(_joinKey)),
+                child: HeroSection(
+                  onJoin: () => openRouteInNewTab('/secretariat'),
+                ),
               ),
             ),
             const SliverToBoxAdapter(
@@ -339,7 +341,7 @@ class _MobileHeroContent extends StatelessWidget {
                   const SizedBox(width: 10),
                   _CompactHeroButton(
                     label: 'Join As Participant',
-                    onTap: () => openRouteInNewTab('/one-act'),
+                    onTap: () => openRouteInNewTab('/participant'),
                   ),
                 ],
               ),
@@ -412,7 +414,7 @@ class _HeroContent extends StatelessWidget {
                       children: [
                         _HeroButton(
                           label: 'JOIN AS PARTICIPANT',
-                          onTap: () => openRouteInNewTab('/one-act'),
+                          onTap: () => openRouteInNewTab('/participant'),
                         ),
                         const SizedBox(height: 14),
                         _HeroButton(
@@ -431,7 +433,7 @@ class _HeroContent extends StatelessWidget {
                       children: [
                         _HeroButton(
                           label: 'JOIN AS PARTICIPANT',
-                          onTap: () => openRouteInNewTab('/one-act'),
+                          onTap: () => openRouteInNewTab('/participant'),
                         ),
                         const SizedBox(width: 22),
                         _HeroButton(
@@ -890,6 +892,16 @@ class CelebrationSection extends StatelessWidget {
                 color: SiteColors.cream.withValues(alpha: .82),
                 fontSize: values.mobile ? 12 : 18,
                 height: 1.35,
+              ),
+            ),
+            SizedBox(height: values.mobile ? 22 : 32),
+            Align(
+              alignment: values.mobile
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: _TicketCtaButton(
+                label: 'BOOK YOUR TICKETS',
+                onTap: () => _openTicketPaydesk(context),
               ),
             ),
           ],
@@ -1662,30 +1674,92 @@ class _DjGarbaPassButton extends StatelessWidget {
 }
 
 Future<void> _openDjGarbaPaydesk(BuildContext context) async {
-  final visitor = await showModalBottomSheet<VisitorPassRegistrant>(
+  await _openTicketPaydesk(context, initialDjGarba: true);
+}
+
+Future<void> _openTicketPaydesk(
+  BuildContext context, {
+  bool initialDjGarba = false,
+}) async {
+  final visitor = await showDialog<VisitorPassRegistrant>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => const _DjGarbaPassDetailsSheet(),
+    barrierDismissible: false,
+    builder: (context) => _TicketBookingDialog(initialDjGarba: initialDjGarba),
   );
   if (!context.mounted || visitor == null) return;
 
   Navigator.of(context).pushNamed('/paydesk?prod=dj-garba', arguments: visitor);
 }
 
-class _DjGarbaPassDetailsSheet extends StatefulWidget {
-  const _DjGarbaPassDetailsSheet();
+class _TicketCtaButton extends StatelessWidget {
+  const _TicketCtaButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
 
   @override
-  State<_DjGarbaPassDetailsSheet> createState() =>
-      _DjGarbaPassDetailsSheetState();
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 768;
+    return HoverLift(
+      child: SizedBox(
+        width: mobile ? 230 : 305,
+        height: mobile ? 46 : 56,
+        child: OutlinedButton(
+          onPressed: onTap,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: SiteColors.cream,
+            side: BorderSide(color: SiteColors.cream.withValues(alpha: .72)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            textStyle: GoogleFonts.montserrat(
+              fontSize: mobile ? 13 : 15,
+              fontWeight: FontWeight.w800,
+              letterSpacing: .6,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(label, maxLines: 1, overflow: TextOverflow.fade),
+              ),
+              SizedBox(width: mobile ? 10 : 14),
+              Icon(Icons.north_east_rounded, size: mobile ? 20 : 25),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _DjGarbaPassDetailsSheetState extends State<_DjGarbaPassDetailsSheet> {
+class _TicketBookingDialog extends StatefulWidget {
+  const _TicketBookingDialog({required this.initialDjGarba});
+
+  final bool initialDjGarba;
+
+  @override
+  State<_TicketBookingDialog> createState() => _TicketBookingDialogState();
+}
+
+class _TicketBookingDialogState extends State<_TicketBookingDialog> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
+  bool _audienceEntry = false;
+  late bool _djGarba = widget.initialDjGarba;
+
+  int get _subtotal => (_audienceEntry ? 50 : 0) + (_djGarba ? 150 : 0);
+
+  String get _packageName {
+    final selected = [
+      if (_audienceEntry) 'COMPETITION AUDIENCE ENTRY',
+      if (_djGarba) 'DJ AND GARBA NIGHT',
+    ];
+    return selected.join(' + ');
+  }
 
   @override
   void dispose() {
@@ -1697,112 +1771,231 @@ class _DjGarbaPassDetailsSheetState extends State<_DjGarbaPassDetailsSheet> {
 
   void _continueToPayment() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_subtotal == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please choose at least one package.')),
+      );
+      return;
+    }
     Navigator.pop(
       context,
       VisitorPassRegistrant(
         name: _name.text.trim(),
         emailAddress: _email.text.trim(),
         phoneNumber: _phone.text.trim(),
-        packageName: 'DJ AND GARBA NIGHT',
-        amount: 150,
+        packageName: _packageName,
+        amount: _subtotal,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomInset),
+    final size = MediaQuery.sizeOf(context);
+    final mobile = size.width < 700;
+    final dialogWidth = mobile ? size.width - 28 : 610.0;
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: mobile ? 14 : 32,
+        vertical: mobile ? 18 : 32,
+      ),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: dialogWidth,
+          maxHeight: size.height * .92,
+        ),
         child: Material(
-          color: const Color(0xFF501221),
-          borderRadius: BorderRadius.circular(22),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'GET YOUR DJ & GARBA PASS',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.montserrat(
-                        color: SiteColors.cream,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+          color: const Color(0xFF5B0821),
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: SiteColors.gold, width: 1.2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x77000000),
+                  blurRadius: 28,
+                  offset: Offset(0, 14),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(17),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  mobile ? 24 : 32,
+                  mobile ? 22 : 30,
+                  mobile ? 24 : 32,
+                  mobile ? 26 : 36,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'BOOK YOUR TICKET',
+                              style: GoogleFonts.montserrat(
+                                color: SiteColors.cream,
+                                fontSize: mobile ? 34 : 46,
+                                fontWeight: FontWeight.w800,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            tooltip: 'Close',
+                            color: SiteColors.cream,
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '₹150 per person',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.montserrat(
-                        color: SiteColors.cream.withValues(alpha: .75),
-                        fontSize: 13,
+                      SizedBox(height: mobile ? 28 : 42),
+                      mobile
+                          ? Column(
+                              children: [
+                                _TicketDialogField(
+                                  label: 'NAME',
+                                  controller: _name,
+                                  validator: (value) =>
+                                      (value?.trim().length ?? 0) >= 2
+                                      ? null
+                                      : 'Enter your full name',
+                                ),
+                                const SizedBox(height: 20),
+                                _TicketDialogField(
+                                  label: 'PHONE NUMBER',
+                                  controller: _phone,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(10),
+                                  ],
+                                  validator: (value) =>
+                                      RegExp(r'^\d{10}$').hasMatch(value ?? '')
+                                      ? null
+                                      : 'Enter a valid 10-digit phone number',
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: _TicketDialogField(
+                                    label: 'NAME',
+                                    controller: _name,
+                                    validator: (value) =>
+                                        (value?.trim().length ?? 0) >= 2
+                                        ? null
+                                        : 'Enter your full name',
+                                  ),
+                                ),
+                                const SizedBox(width: 28),
+                                Expanded(
+                                  child: _TicketDialogField(
+                                    label: 'PHONE NUMBER',
+                                    controller: _phone,
+                                    keyboardType: TextInputType.phone,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(10),
+                                    ],
+                                    validator: (value) =>
+                                        RegExp(
+                                          r'^\d{10}$',
+                                        ).hasMatch(value ?? '')
+                                        ? null
+                                        : 'Enter a valid 10-digit phone number',
+                                  ),
+                                ),
+                              ],
+                            ),
+                      const SizedBox(height: 22),
+                      _TicketDialogField(
+                        label: 'EMAIL ADDRESS',
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) =>
+                            RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            ).hasMatch(value ?? '')
+                            ? null
+                            : 'Enter a valid email address',
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    _DjGarbaPassField(
-                      label: 'Full Name',
-                      controller: _name,
-                      validator: (value) => (value?.trim().length ?? 0) >= 2
-                          ? null
-                          : 'Enter your full name',
-                    ),
-                    const SizedBox(height: 18),
-                    _DjGarbaPassField(
-                      label: 'E-Mail Address',
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) =>
-                          RegExp(
-                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                          ).hasMatch(value ?? '')
-                          ? null
-                          : 'Enter a valid email address',
-                    ),
-                    const SizedBox(height: 18),
-                    _DjGarbaPassField(
-                      label: 'Phone Number',
-                      controller: _phone,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      validator: (value) =>
-                          RegExp(r'^\d{10}$').hasMatch(value ?? '')
-                          ? null
-                          : 'Enter a valid 10-digit phone number',
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _continueToPayment,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF201713),
-                          foregroundColor: SiteColors.cream,
-                          side: const BorderSide(color: SiteColors.gold),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      SizedBox(height: mobile ? 28 : 34),
+                      Text(
+                        'CHOOSE YOUR PACKAGE',
+                        style: GoogleFonts.montserrat(
+                          color: SiteColors.cream,
+                          fontSize: mobile ? 18 : 23,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _TicketPackageTile(
+                        label: 'COMPETITION AUDIENCE ENTRY',
+                        price: 50,
+                        selected: _audienceEntry,
+                        onTap: () {
+                          setState(() => _audienceEntry = !_audienceEntry);
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _TicketPackageTile(
+                        label: 'DJ AND GARBA NIGHT',
+                        price: 150,
+                        selected: _djGarba,
+                        onTap: () {
+                          setState(() => _djGarba = !_djGarba);
+                        },
+                      ),
+                      SizedBox(height: mobile ? 26 : 34),
+                      Text(
+                        'Subtotal: ₹$_subtotal',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.montserrat(
+                          color: SiteColors.cream,
+                          fontSize: mobile ? 16 : 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.center,
+                        child: SizedBox(
+                          width: mobile ? 230 : 260,
+                          height: mobile ? 54 : 60,
+                          child: OutlinedButton(
+                            onPressed: _continueToPayment,
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: const Color(0xFF201713),
+                              foregroundColor: SiteColors.cream,
+                              side: const BorderSide(color: SiteColors.gold),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'CHECKOUT',
+                              style: GoogleFonts.montserrat(
+                                fontSize: mobile ? 18 : 22,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 7,
+                              ),
+                            ),
                           ),
                         ),
-                        child: Text(
-                          'CONTINUE TO PAYMENT',
-                          style: GoogleFonts.montserrat(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.3,
-                          ),
-                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1813,8 +2006,8 @@ class _DjGarbaPassDetailsSheetState extends State<_DjGarbaPassDetailsSheet> {
   }
 }
 
-class _DjGarbaPassField extends StatelessWidget {
-  const _DjGarbaPassField({
+class _TicketDialogField extends StatelessWidget {
+  const _TicketDialogField({
     required this.label,
     required this.controller,
     required this.validator,
@@ -1877,6 +2070,87 @@ class _DjGarbaPassField extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _TicketPackageTile extends StatelessWidget {
+  const _TicketPackageTile({
+    required this.label,
+    required this.price,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final int price;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 700;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: EdgeInsets.symmetric(
+          horizontal: mobile ? 14 : 18,
+          vertical: mobile ? 15 : 18,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? Colors.white.withValues(alpha: .08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? SiteColors.cream : SiteColors.gold,
+            width: selected ? 1.6 : 1.1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: mobile ? 24 : 28,
+              height: mobile ? 24 : 28,
+              padding: EdgeInsets.all(mobile ? 5 : 6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: SiteColors.cream, width: 1.8),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selected ? SiteColors.cream : Colors.transparent,
+                ),
+              ),
+            ),
+            SizedBox(width: mobile ? 14 : 20),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.montserrat(
+                  color: SiteColors.cream,
+                  fontSize: mobile ? 13 : 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              '₹ $price',
+              style: GoogleFonts.montserrat(
+                color: SiteColors.cream,
+                fontSize: mobile ? 17 : 22,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class SponsorVisibilitySection extends StatelessWidget {
@@ -1985,7 +2259,7 @@ class JoinUsSection extends StatelessWidget {
                 _JoinUsCard(
                   title: 'Join As Participant',
                   subtitle: 'Be a part of the One-Act Play Competition',
-                  onTap: () => openRouteInNewTab('/one-act'),
+                  onTap: () => openRouteInNewTab('/participant'),
                 ),
                 const SizedBox(height: 14),
                 _JoinUsCard(

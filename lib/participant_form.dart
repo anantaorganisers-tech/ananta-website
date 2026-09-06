@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
 import 'one_act_submission.dart';
-import 'web_navigation.dart';
 
 class ParticipantForm extends StatefulWidget {
   const ParticipantForm({super.key});
@@ -140,7 +139,8 @@ class _ParticipantFormState extends State<ParticipantForm> {
                         Align(
                           alignment: Alignment.center,
                           child: OutlinedButton.icon(
-                            onPressed: () => openRouteInNewTab('/one-act'),
+                            onPressed: () =>
+                                Navigator.of(context).pushNamed('/one-act'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: _ParticipantColors.cream,
                               side: const BorderSide(color: Color(0xFF9A7177)),
