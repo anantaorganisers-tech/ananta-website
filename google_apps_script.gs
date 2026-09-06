@@ -37,6 +37,7 @@ const VISITOR_PASS_HEADERS = [
   'Payment Status',
   'Payment Recorded At',
   'Pass QR Screenshot',
+  'Package',
 ];
 
 function doPost(e) {
@@ -173,6 +174,7 @@ function saveVisitorPassPayment_(payload) {
     throw new Error('Could not allocate a unique pass ID. Please submit again.');
   }
   const recordedAt = new Date().toISOString();
+  const amount = Number(payload.amount);
   sheet.appendRow([
     payload.submittedAt || recordedAt,
     passId,
@@ -181,10 +183,11 @@ function saveVisitorPassPayment_(payload) {
     payload.phoneNumber || '',
     payload.upiId || '',
     payload.transactionId || '',
-    120,
+    amount,
     'Payment details submitted',
     recordedAt,
     '',
+    payload.packageName || '',
   ]);
   saveVisitorPassQrAtRow_(
     sheet,
@@ -255,6 +258,8 @@ function validateVisitorPassPayload_(payload) {
     'name',
     'emailAddress',
     'phoneNumber',
+    'packageName',
+    'amount',
     'upiId',
     'transactionId',
     'passId',
@@ -266,6 +271,10 @@ function validateVisitorPassPayload_(payload) {
       }
     },
   );
+  const amount = Number(payload.amount);
+  if (![50, 150, 200].includes(amount)) {
+    throw new Error('Invalid visitor pass amount.');
+  }
 }
 
 function saveBrochure_(payload) {

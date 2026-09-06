@@ -10,11 +10,15 @@ class VisitorPassRegistrant {
     required this.name,
     required this.emailAddress,
     required this.phoneNumber,
+    required this.packageName,
+    required this.amount,
   });
 
   final String name;
   final String emailAddress;
   final String phoneNumber;
+  final String packageName;
+  final int amount;
 }
 
 class VisitorPass {
@@ -39,6 +43,8 @@ class VisitorPassSubmissionService {
       'name': registrant.name,
       'emailAddress': registrant.emailAddress,
       'phoneNumber': registrant.phoneNumber,
+      'packageName': registrant.packageName,
+      'amount': registrant.amount.toString(),
       'upiId': upiId,
       'transactionId': transactionId,
       'passId': passId,
