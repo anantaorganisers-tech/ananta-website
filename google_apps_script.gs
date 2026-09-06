@@ -37,54 +37,46 @@ const VISITOR_PASS_HEADERS = [
   'Payment Status',
   'Payment Recorded At',
   'Pass QR Screenshot',
+  'Package',
 ];
+const SHEET_NAME = 'Applications';
 
 function doPost(e) {
   try {
     const payload = parsePayload_(e);
-    if (payload.formType === 'oneActPayment') {
-      return saveOneActPayment_(payload);
-    }
-    if (payload.formType === 'visitorPassPayment') {
-      return saveVisitorPassPayment_(payload);
-    }
-    if (payload.formType === 'visitorPassQr') {
-      return saveVisitorPassQr_(payload);
-    }
-    return saveSecretariatApplication_(payload);
-  } catch (error) {
-    return jsonResponse_({
-      success: false,
-      message: String(error && error.message ? error.message : error),
-    });
-  }
-}
+    const sheet = getOrCreateSheet_();
 
-// Run this once from the Apps Script editor to grant Drive access for uploads.
-function authorizeOneActDrive() {
-  getOrCreateBrochureFolder_();
-  getOrCreateVisitorPassQrFolder_();
-}
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        'Submitted At',
+        'Name',
+        'Class',
+        'School',
+        'Contact Number',
+        'E-Mail Address',
+        'Address',
+        'Past Experience (If Any)',
+        'A Short Description of your Skillsets',
+        'How much time can you contribute to Rangaksh?',
+        'Preferred Department',
+        'Referral name from Team Rangaksh',
+      ]);
+    }
 
-function saveSecretariatApplication_(payload) {
-  const sheet = getOrCreateSheet_(APPLICATIONS_SHEET_NAME);
-
-  if (sheet.getLastRow() === 0) {
     sheet.appendRow([
-      'Submitted At',
-      'Name',
-      'Class',
-      'School',
-      'Contact Number',
-      'E-Mail Address',
-      'Address',
-      'Past Experience (If Any)',
-      'A Short Description of your Skillsets',
-      'How much time can you contribute to Rangaksh?',
-      'Preferred Department',
-      'Referral name from Team Rangaksh',
+      payload.submittedAt || new Date().toISOString(),
+      payload.name || '',
+      payload.studentClass || '',
+      payload.school || '',
+      payload.contactNumber || '',
+      payload.emailAddress || '',
+      payload.address || '',
+      payload.pastExperience || '',
+      payload.skillsets || '',
+      payload.timeContribution || '',
+      payload.preferredDepartment || '',
+      payload.referralName || '',
     ]);
-  }
 
   sheet.appendRow([
     payload.submittedAt || new Date().toISOString(),
@@ -173,6 +165,7 @@ function saveVisitorPassPayment_(payload) {
     throw new Error('Could not allocate a unique pass ID. Please submit again.');
   }
   const recordedAt = new Date().toISOString();
+  const amount = Number(payload.amount);
   sheet.appendRow([
     payload.submittedAt || recordedAt,
     passId,
@@ -181,10 +174,11 @@ function saveVisitorPassPayment_(payload) {
     payload.phoneNumber || '',
     payload.upiId || '',
     payload.transactionId || '',
-    120,
+    amount,
     'Payment details submitted',
     recordedAt,
     '',
+    payload.packageName || '',
   ]);
   saveVisitorPassQrAtRow_(
     sheet,
@@ -255,6 +249,8 @@ function validateVisitorPassPayload_(payload) {
     'name',
     'emailAddress',
     'phoneNumber',
+    'packageName',
+    'amount',
     'upiId',
     'transactionId',
     'passId',
@@ -266,6 +262,10 @@ function validateVisitorPassPayload_(payload) {
       }
     },
   );
+  const amount = Number(payload.amount);
+  if (![50, 150, 200].includes(amount)) {
+    throw new Error('Invalid visitor pass amount.');
+  }
 }
 
 function saveBrochure_(payload) {
@@ -302,72 +302,31 @@ function shareFileWithLink_(file) {
   // Link access lets organisers open uploaded files directly from the sheet.
   try {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return ContentService.createTextOutput(
+      JSON.stringify({'success': true}),
+    ).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    console.warn('Could not enable link sharing for file: ' + error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        'success': false,
+        'message': String(error),
+      }),
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
 function getOrCreateSheet_(sheetName) {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  const existing = spreadsheet.getSheetByName(sheetName);
+  const activeSheet = spreadsheet.getActiveSheet();
+  const existing = spreadsheet.getSheetByName(SHEET_NAME);
   if (existing) {
     return existing;
   }
-
-  const activeSheet = spreadsheet.getActiveSheet();
-  if (
-    sheetName === APPLICATIONS_SHEET_NAME &&
-    spreadsheet.getSheets().length === 1 &&
-    activeSheet &&
-    activeSheet.getLastRow() === 0
-  ) {
-    activeSheet.setName(sheetName);
+  if (activeSheet) {
+    activeSheet.setName(SHEET_NAME);
     return activeSheet;
   }
-
-  return spreadsheet.insertSheet(sheetName);
-}
-
-function ensureHeaders_(sheet, headers) {
-  if (sheet.getLastRow() !== 0) {
-    return;
-  }
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  sheet.setFrozenRows(1);
-}
-
-function transactionAlreadyRecorded_(sheet, transactionId) {
-  const firstDataRow = 2;
-  const transactionColumn = 13;
-  const dataRowCount = sheet.getLastRow() - 1;
-  if (dataRowCount <= 0) {
-    return false;
-  }
-
-  const recordedTransactions = sheet
-    .getRange(firstDataRow, transactionColumn, dataRowCount, 1)
-    .getDisplayValues();
-  return recordedTransactions.some(function (row) {
-    return row[0].trim() === String(transactionId).trim();
-  });
-}
-
-function findMatchingRow_(sheet, column, value) {
-  const firstDataRow = 2;
-  const dataRowCount = sheet.getLastRow() - 1;
-  if (dataRowCount <= 0) {
-    return 0;
-  }
-  const values = sheet
-    .getRange(firstDataRow, column, dataRowCount, 1)
-    .getDisplayValues();
-  const target = String(value).trim();
-  for (let index = 0; index < values.length; index++) {
-    if (values[index][0].trim() === target) {
-      return firstDataRow + index;
-    }
-  }
-  return 0;
+  return spreadsheet.insertSheet(SHEET_NAME);
 }
 
 function parsePayload_(e) {
@@ -379,22 +338,20 @@ function parsePayload_(e) {
     return JSON.parse(rawBody);
   }
 
-  return e && e.parameter ? e.parameter : {};
-}
+  const params = e && e.parameter ? e.parameter : {};
 
-function safeFileName_(fileName) {
-  return (
-    String(fileName).replace(/[^a-zA-Z0-9._ -]/g, '_').replace(/^\.+/, '') ||
-    'brochure.pdf'
-  );
-}
-
-function escapeFormulaString_(value) {
-  return String(value).replace(/"/g, '""');
-}
-
-function jsonResponse_(body) {
-  return ContentService.createTextOutput(JSON.stringify(body)).setMimeType(
-    ContentService.MimeType.JSON,
-  );
+  return {
+    submittedAt: params.submittedAt || '',
+    name: params.name || '',
+    studentClass: params.studentClass || '',
+    school: params.school || '',
+    contactNumber: params.contactNumber || '',
+    emailAddress: params.emailAddress || '',
+    address: params.address || '',
+    pastExperience: params.pastExperience || '',
+    skillsets: params.skillsets || '',
+    timeContribution: params.timeContribution || '',
+    preferredDepartment: params.preferredDepartment || '',
+    referralName: params.referralName || '',
+  };
 }

@@ -12,7 +12,7 @@ import 'visitor_pass_submission.dart';
 
 enum PaydeskProduct {
   oneAct(code: 'one-act', heading: 'ONE ACT COMPETITION', amount: 800),
-  djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 120);
+  djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 150);
 
   const PaydeskProduct({
     required this.code,
@@ -52,6 +52,10 @@ class _PaydeskPageState extends State<PaydeskPage> {
   final _transactionId = TextEditingController();
   bool _isSubmitting = false;
   bool _paymentRecorded = false;
+
+  int get _payableAmount => widget.visitor?.amount ?? widget.product.amount;
+  String get _checkoutHeading =>
+      widget.visitor?.packageName ?? widget.product.heading;
 
   @override
   void dispose() {
@@ -302,7 +306,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          widget.product.heading,
+                          _checkoutHeading,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             color: _PaymentColors.cream,
@@ -322,7 +326,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
                           ),
                         ),
                         SizedBox(height: (mobile ? 44 : 58) * scale),
-                        _QrPanel(product: widget.product, scale: scale),
+                        _QrPanel(amount: _payableAmount, scale: scale),
                         SizedBox(height: 34 * scale),
                         _PaymentField(
                           label: 'Enter UPI ID',
@@ -395,9 +399,9 @@ class _PaydeskPageState extends State<PaydeskPage> {
 }
 
 class _QrPanel extends StatelessWidget {
-  const _QrPanel({required this.product, required this.scale});
+  const _QrPanel({required this.amount, required this.scale});
 
-  final PaydeskProduct product;
+  final int amount;
   final double scale;
 
   @override
@@ -444,7 +448,7 @@ class _QrPanel extends StatelessWidget {
           ),
           SizedBox(height: 12 * scale),
           Text(
-            'Amount to be paid: ₹${product.amount}',
+            'Amount to be paid: ₹$amount',
             textAlign: TextAlign.center,
             style: GoogleFonts.montserrat(
               color: _PaymentColors.cream,
