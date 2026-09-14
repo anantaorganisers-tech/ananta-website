@@ -58,6 +58,7 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
           return Padding(
             padding: EdgeInsets.all(mobile ? 10 : 16),
             child: Container(
+              height: mobile ? 94 : null,
               padding: EdgeInsets.symmetric(horizontal: mobile ? 14 : 24),
               decoration: BoxDecoration(
                 color: const Color(0xFF530C1F),
@@ -82,21 +83,26 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
                     SizedBox(width: mobile ? 9 : 16),
                     Expanded(
                       child: Text(
-                        'ANANTA ORGANIZERS',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        mobile ? 'ANANTA\nORGANIZERS' : 'ANANTA ORGANIZERS',
+                        maxLines: mobile ? 2 : 1,
+                        overflow: TextOverflow.visible,
                         style: GoogleFonts.montserrat(
                           color: _CompetitionColors.cream,
                           fontSize: mobile ? 12 : 19,
                           fontWeight: FontWeight.w600,
                           letterSpacing: mobile ? 1.8 : 3.2,
+                          height: mobile ? 1.25 : 1,
                         ),
                       ),
                     ),
                   ] else
                     const Spacer(),
-                  if (showOrganizerName && mobileRangakshMode) const Spacer(),
-                  if (!mobileRangakshMode || showRangakshLogo)
+                  if (mobileRangakshMode)
+                    _AnimatedRangakshAppBarLogo(
+                      mobile: mobile,
+                      visible: showRangakshLogo,
+                    )
+                  else
                     AnimatedOpacity(
                       duration: const Duration(milliseconds: 240),
                       curve: Curves.easeOutCubic,
@@ -112,7 +118,7 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
                           offset: Offset(mobile ? 0 : 10, 0),
                           child: SizedBox(
                             width: mobile ? 142 : 250,
-                            height: mobile ? 100 : 100,
+                            height: mobile ? 64 : 100,
                             child: Image.asset(
                               'lib/assets/appbar_rangaksh.png',
                               fit: BoxFit.contain,
@@ -127,6 +133,39 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _AnimatedRangakshAppBarLogo extends StatelessWidget {
+  const _AnimatedRangakshAppBarLogo({
+    required this.mobile,
+    required this.visible,
+  });
+
+  final bool mobile;
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: mobile ? 142 : 250,
+      height: mobile ? 64 : 100,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        opacity: visible ? 1 : 0,
+        child: AnimatedSlide(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          offset: visible ? Offset.zero : const Offset(.08, 0),
+          child: Image.asset(
+            'lib/assets/appbar_rangaksh.png',
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
       ),
     );
   }

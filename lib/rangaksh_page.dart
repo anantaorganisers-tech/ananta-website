@@ -1435,20 +1435,11 @@ class ThemeSection extends StatelessWidget {
                 children: [
                   Text('THEME', style: _sectionOverline(values)),
                   const SizedBox(height: 20),
-                  Image.asset(
-                    'lib/assets/navratri_navras_text.png',
-                    width: double.infinity,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'NINE NIGHTS. NINE RASAS. INFINITE STORIES.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.montserrat(
-                      color: SiteColors.cream,
-                      fontSize: values.mobile ? 11 : 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: values.mobile ? 1.2 : 2.4,
+                  FractionallySizedBox(
+                    widthFactor: values.mobile ? 1 : .78,
+                    child: Image.asset(
+                      'lib/assets/navratri_navras_text.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                   SizedBox(height: values.mobile ? 32 : 56),
