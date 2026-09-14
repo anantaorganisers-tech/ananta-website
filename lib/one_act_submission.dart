@@ -36,8 +36,12 @@ class OneActRegistration {
 class OneActSubmissionService {
   OneActSubmissionService._();
 
-  static const googleAppsScriptUrl =
-      'https://script.google.com/macros/s/AKfycbzqztAwr8fgKZt-q93kxIa_Yhj4S8WHTmp9LQpF_PdLe5YbxqHomcXu9zvKI014zx-1/exec';
+  static const _defaultGoogleAppsScriptUrl =
+      'https://script.google.com/macros/s/AKfycbyhi3UVY2NSJDSYZZqNydiTUQdXE6rfbo0sVYLX2RcIyYHMZ3ddChwKwHtuqFwKABqg/exec';
+  static const googleAppsScriptUrl = String.fromEnvironment(
+    'GOOGLE_APPS_SCRIPT_URL',
+    defaultValue: _defaultGoogleAppsScriptUrl,
+  );
 
   static Future<void> submitPayment({
     required OneActRegistration registration,
@@ -67,9 +71,7 @@ class OneActSubmissionService {
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw OneActSubmissionException(
-        'The server returned status ${response.statusCode}.',
-      );
+      throw OneActSubmissionException(_statusErrorMessage(response.statusCode));
     }
 
     try {
@@ -84,6 +86,13 @@ class OneActSubmissionService {
         'The server returned an invalid response.',
       );
     }
+  }
+
+  static String _statusErrorMessage(int statusCode) {
+    if (statusCode == 404) {
+      return 'The Apps Script web app was not found. Check the GOOGLE_APPS_SCRIPT_URL for this test environment and redeploy the script.';
+    }
+    return 'The server returned status $statusCode.';
   }
 }
 

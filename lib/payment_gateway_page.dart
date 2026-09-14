@@ -56,7 +56,11 @@ class _PaydeskPageState extends State<PaydeskPage> {
   int get _payableAmount => widget.visitor?.amount ?? widget.product.amount;
   String get _checkoutHeading =>
       widget.visitor == null ? widget.product.heading : 'AUDIENCE TICKET';
-  String? get _checkoutPackageSummary => widget.visitor?.packageName;
+  String? get _checkoutPackageSummary {
+    final visitor = widget.visitor;
+    if (visitor == null) return null;
+    return '${visitor.packageName} • ${visitor.ticketCount} ticket${visitor.ticketCount == 1 ? '' : 's'}';
+  }
 
   @override
   void dispose() {
@@ -100,21 +104,21 @@ class _PaydeskPageState extends State<PaydeskPage> {
         });
         await _showOneActConfirmation();
       } else {
-        final passId = _generatePassId();
-        final qrImage = await _createPassQrImage(passId);
+        final passIds = _generatePassIds(widget.visitor!.ticketCount);
+        final qrImages = await Future.wait(passIds.map(_createPassQrImage));
         final pass = await VisitorPassSubmissionService.submitPayment(
           registrant: widget.visitor!,
           upiId: _upiId.text.trim(),
           transactionId: _transactionId.text.trim(),
-          passId: passId,
-          qrImageBytes: qrImage,
+          passIds: passIds,
+          qrImageBytes: qrImages,
         );
         if (!mounted) return;
         setState(() {
           _paymentRecorded = true;
           _isSubmitting = false;
         });
-        await _showVisitorPass(pass.passId);
+        await _showVisitorPasses(pass.passIds);
         if (!mounted) return;
         Navigator.of(
           context,
@@ -159,6 +163,14 @@ class _PaydeskPageState extends State<PaydeskPage> {
     return imageData.buffer.asUint8List();
   }
 
+  List<String> _generatePassIds(int count) {
+    final passIds = <String>{};
+    while (passIds.length < count) {
+      passIds.add(_generatePassId());
+    }
+    return passIds.toList();
+  }
+
   String _generatePassId() {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = Random.secure();
@@ -194,11 +206,11 @@ class _PaydeskPageState extends State<PaydeskPage> {
     ),
   );
 
-  Future<void> _showVisitorPass(String passId) => showDialog<void>(
+  Future<void> _showVisitorPasses(List<String> passIds) => showDialog<void>(
     context: context,
     builder: (context) {
       final mobile = MediaQuery.sizeOf(context).width < 700;
-      final qrSize = mobile ? 190.0 : 230.0;
+      final qrSize = mobile ? 170.0 : 190.0;
       return Dialog(
         backgroundColor: _PaymentColors.field,
         shape: RoundedRectangleBorder(
@@ -206,59 +218,53 @@ class _PaydeskPageState extends State<PaydeskPage> {
           side: const BorderSide(color: _PaymentColors.gold),
         ),
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: mobile ? 330 : 390),
+          constraints: BoxConstraints(
+            maxWidth: mobile ? 340 : 620,
+            maxHeight: MediaQuery.sizeOf(context).height * .86,
+          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Your DJ & Garba Pass',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.montserrat(
-                    color: _PaymentColors.cream,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  color: Colors.white,
-                  child: SizedBox.square(
-                    dimension: qrSize,
-                    child: QrImageView(
-                      data: passId,
-                      version: QrVersions.auto,
-                      errorCorrectionLevel: QrErrorCorrectLevel.M,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    passIds.length == 1
+                        ? 'Your Rangaksh Ticket'
+                        : 'Your Rangaksh Tickets',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.montserrat(
+                      color: _PaymentColors.cream,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  passId,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.montserrat(
-                    color: _PaymentColors.gold,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 18,
+                    runSpacing: 18,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (final passId in passIds)
+                        _VisitorPassQrCard(passId: passId, qrSize: qrSize),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Take a screenshot of this pass. Present this QR code at entry.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.montserrat(
-                    color: _PaymentColors.cream.withValues(alpha: .84),
-                    fontSize: 13,
-                    height: 1.35,
+                  const SizedBox(height: 18),
+                  Text(
+                    'Take a screenshot of these passes. Present each QR code at entry.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.montserrat(
+                      color: _PaymentColors.cream.withValues(alpha: .84),
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _dialogOkButton(context),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _dialogOkButton(context),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -407,6 +413,48 @@ class _PaydeskPageState extends State<PaydeskPage> {
             const _PaymentFooter(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _VisitorPassQrCard extends StatelessWidget {
+  const _VisitorPassQrCard({required this.passId, required this.qrSize});
+
+  final String passId;
+  final double qrSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: qrSize + 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            color: Colors.white,
+            child: SizedBox.square(
+              dimension: qrSize,
+              child: QrImageView(
+                data: passId,
+                version: QrVersions.auto,
+                errorCorrectionLevel: QrErrorCorrectLevel.M,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            passId,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.montserrat(
+              color: _PaymentColors.gold,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -54,6 +54,7 @@ const VISITOR_PASS_HEADERS = [
   'Payment Recorded At',
   'Pass QR Screenshot',
   'Package',
+  'Ticket Count',
 ];
 
 const SPONSOR_HEADERS = [
@@ -190,33 +191,42 @@ function saveVisitorPassPayment_(payload) {
   const sheet = getOrCreateSheet_(VISITOR_PASS_SHEET_NAME);
   ensureHeaders_(sheet, VISITOR_PASS_HEADERS);
   const existingRow = findMatchingRow_(sheet, 7, payload.transactionId);
+  const passIds = readJsonArray_(payload.passIds, payload.passId);
+  const qrImagesBase64 = readJsonArray_(
+    payload.qrImagesBase64,
+    payload.qrImageBase64,
+  );
+  const ticketCount = Number(payload.ticketCount || passIds.length);
+
   if (existingRow) {
     const existingPassId = sheet.getRange(existingRow, 2).getDisplayValue();
     const qrLink = sheet.getRange(existingRow, 11).getDisplayValue();
     if (!qrLink) {
-      saveVisitorPassQrAtRow_(
+      saveVisitorPassQrsAtRow_(
         sheet,
         existingRow,
-        existingPassId || payload.passId,
-        payload.qrImageBase64,
+        existingPassId ? existingPassId.split(/\s+/).filter(Boolean) : passIds,
+        qrImagesBase64,
       );
     }
     return jsonResponse_({
       success: true,
-      passId: existingPassId || payload.passId,
+      passId: existingPassId || passIds[0],
+      passIds: existingPassId
+        ? existingPassId.split(/\s+/).filter(Boolean)
+        : passIds,
       existing: true,
     });
   }
 
-  const passId = payload.passId;
-  if (findMatchingRow_(sheet, 2, passId)) {
+  if (passIds.some(function (passId) { return passIdAlreadyRecorded_(sheet, passId); })) {
     throw new Error('Could not allocate a unique pass ID. Please submit again.');
   }
 
   const recordedAt = new Date().toISOString();
   sheet.appendRow([
     payload.submittedAt || recordedAt,
-    passId,
+    passIds.join('\n'),
     payload.name || '',
     payload.emailAddress || '',
     payload.phoneNumber || '',
@@ -227,16 +237,12 @@ function saveVisitorPassPayment_(payload) {
     recordedAt,
     '',
     payload.packageName || '',
+    ticketCount,
   ]);
 
-  saveVisitorPassQrAtRow_(
-    sheet,
-    sheet.getLastRow(),
-    passId,
-    payload.qrImageBase64,
-  );
+  saveVisitorPassQrsAtRow_(sheet, sheet.getLastRow(), passIds, qrImagesBase64);
 
-  return jsonResponse_({success: true, passId: passId});
+  return jsonResponse_({success: true, passId: passIds[0], passIds: passIds});
 }
 
 function saveVisitorPassQr_(payload) {
@@ -257,6 +263,34 @@ function saveVisitorPassQr_(payload) {
 }
 
 function saveVisitorPassQrAtRow_(sheet, row, passId, qrImageBase64) {
+  saveVisitorPassQrsAtRow_(sheet, row, [passId], [qrImageBase64]);
+}
+
+function saveVisitorPassQrsAtRow_(sheet, row, passIds, qrImagesBase64) {
+  if (passIds.length !== qrImagesBase64.length) {
+    throw new Error('Every pass ID must have a matching QR image.');
+  }
+
+  const files = passIds.map(function (passId, index) {
+    return saveVisitorPassQrFile_(passId, qrImagesBase64[index]);
+  });
+
+  const text = files
+    .map(function (fileInfo, index) {
+      return 'QR ' + (index + 1) + ': ' + fileInfo.passId;
+    })
+    .join('\n');
+  const builder = SpreadsheetApp.newRichTextValue().setText(text);
+  let offset = 0;
+  files.forEach(function (fileInfo, index) {
+    const label = 'QR ' + (index + 1) + ': ' + fileInfo.passId;
+    builder.setLinkUrl(offset, offset + label.length, fileInfo.url);
+    offset += label.length + 1;
+  });
+  sheet.getRange(row, 11).setRichTextValue(builder.build());
+}
+
+function saveVisitorPassQrFile_(passId, qrImageBase64) {
   const imageBytes = Utilities.base64Decode(qrImageBase64);
   if (imageBytes.length > MAX_QR_IMAGE_BYTES) {
     throw new Error('The generated QR image is too large.');
@@ -267,13 +301,7 @@ function saveVisitorPassQrAtRow_(sheet, row, passId, qrImageBase64) {
     Utilities.newBlob(imageBytes, MimeType.PNG, safeFileName_(passId) + '.png'),
   );
   shareFileWithLink_(file);
-  sheet
-    .getRange(row, 11)
-    .setFormula(
-      '=HYPERLINK("' +
-        escapeFormulaString_(file.getUrl()) +
-        '", "View QR screenshot")',
-    );
+  return {passId: passId, url: file.getUrl()};
 }
 
 function validateSponsorPayload_(payload) {
@@ -319,6 +347,7 @@ function validateVisitorPassPayload_(payload) {
     'phoneNumber',
     'packageName',
     'amount',
+    'ticketCount',
     'upiId',
     'transactionId',
     'passId',
@@ -330,7 +359,21 @@ function validateVisitorPassPayload_(payload) {
   });
 
   const amount = Number(payload.amount);
-  if (![50, 150, 200].includes(amount)) {
+  const ticketCount = Number(payload.ticketCount);
+  if (!Number.isInteger(ticketCount) || ticketCount < 1 || ticketCount > 20) {
+    throw new Error('Invalid ticket count.');
+  }
+
+  const passIds = readJsonArray_(payload.passIds, payload.passId);
+  const qrImagesBase64 = readJsonArray_(
+    payload.qrImagesBase64,
+    payload.qrImageBase64,
+  );
+  if (passIds.length !== ticketCount || qrImagesBase64.length !== ticketCount) {
+    throw new Error('The ticket count does not match the generated passes.');
+  }
+
+  if (![50, 150, 200].includes(amount / ticketCount)) {
     throw new Error('Invalid visitor pass amount.');
   }
 }
@@ -383,6 +426,8 @@ function getOrCreateSheet_(sheetName) {
 
 function ensureHeaders_(sheet, headers) {
   if (sheet.getLastRow() !== 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
     return;
   }
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -406,6 +451,22 @@ function findMatchingRow_(sheet, column, value) {
   return 0;
 }
 
+function passIdAlreadyRecorded_(sheet, passId) {
+  if (!passId || sheet.getLastRow() < 2) {
+    return false;
+  }
+
+  const values = sheet
+    .getRange(2, 2, sheet.getLastRow() - 1, 1)
+    .getDisplayValues();
+  const target = String(passId).trim();
+  return values.some(function (row) {
+    return row[0].split(/\s+/).some(function (recordedPassId) {
+      return recordedPassId.trim() === target;
+    });
+  });
+}
+
 function parsePayload_(e) {
   const postData = e && e.postData ? e.postData : null;
   const rawBody = postData && postData.contents ? postData.contents : '';
@@ -421,6 +482,23 @@ function parsePayload_(e) {
     payload[key] = params[key];
   });
   return payload;
+}
+
+function readJsonArray_(rawValue, fallbackValue) {
+  if (rawValue) {
+    try {
+      const parsed = JSON.parse(rawValue);
+      if (Array.isArray(parsed)) {
+        return parsed.map(function (value) {
+          return String(value);
+        });
+      }
+    } catch (error) {
+      throw new Error('Invalid array payload.');
+    }
+  }
+
+  return fallbackValue ? [String(fallbackValue)] : [];
 }
 
 function safeFileName_(value) {

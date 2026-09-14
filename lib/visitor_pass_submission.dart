@@ -12,6 +12,7 @@ class VisitorPassRegistrant {
     required this.phoneNumber,
     required this.packageName,
     required this.amount,
+    required this.ticketCount,
   });
 
   final String name;
@@ -19,12 +20,13 @@ class VisitorPassRegistrant {
   final String phoneNumber;
   final String packageName;
   final int amount;
+  final int ticketCount;
 }
 
 class VisitorPass {
-  const VisitorPass({required this.passId});
+  const VisitorPass({required this.passIds});
 
-  final String passId;
+  final List<String> passIds;
 }
 
 class VisitorPassSubmissionService {
@@ -34,9 +36,14 @@ class VisitorPassSubmissionService {
     required VisitorPassRegistrant registrant,
     required String upiId,
     required String transactionId,
-    required String passId,
-    required Uint8List qrImageBytes,
+    required List<String> passIds,
+    required List<Uint8List> qrImageBytes,
   }) async {
+    if (passIds.length != qrImageBytes.length) {
+      throw const VisitorPassSubmissionException(
+        'Could not prepare all requested ticket QR codes.',
+      );
+    }
     final body = await _post({
       'formType': 'visitorPassPayment',
       'submittedAt': DateTime.now().toIso8601String(),
@@ -45,18 +52,31 @@ class VisitorPassSubmissionService {
       'phoneNumber': registrant.phoneNumber,
       'packageName': registrant.packageName,
       'amount': registrant.amount.toString(),
+      'ticketCount': registrant.ticketCount.toString(),
       'upiId': upiId,
       'transactionId': transactionId,
-      'passId': passId,
-      'qrImageBase64': base64Encode(qrImageBytes),
+      'passId': passIds.first,
+      'passIds': jsonEncode(passIds),
+      'qrImageBase64': base64Encode(qrImageBytes.first),
+      'qrImagesBase64': jsonEncode(qrImageBytes.map(base64Encode).toList()),
     });
-    final returnedPassId = body['passId']?.toString();
-    if (returnedPassId == null || returnedPassId.isEmpty) {
+    final returnedPassIds = _readReturnedPassIds(body);
+    if (returnedPassIds.isEmpty) {
       throw const VisitorPassSubmissionException(
-        'The server did not return a pass ID.',
+        'The server did not return pass IDs.',
       );
     }
-    return VisitorPass(passId: returnedPassId);
+    return VisitorPass(passIds: returnedPassIds);
+  }
+
+  static List<String> _readReturnedPassIds(Map<String, dynamic> body) {
+    final passIds = body['passIds'];
+    if (passIds is List) {
+      return passIds.map((value) => value.toString()).toList();
+    }
+
+    final passId = body['passId']?.toString();
+    return passId == null || passId.isEmpty ? const [] : [passId];
   }
 
   static Future<Map<String, dynamic>> _post(Map<String, String> payload) async {
@@ -66,7 +86,7 @@ class VisitorPassSubmissionService {
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw VisitorPassSubmissionException(
-        'The server returned status ${response.statusCode}.',
+        _statusErrorMessage(response.statusCode),
       );
     }
 
@@ -83,6 +103,13 @@ class VisitorPassSubmissionService {
         'The server returned an invalid response.',
       );
     }
+  }
+
+  static String _statusErrorMessage(int statusCode) {
+    if (statusCode == 404) {
+      return 'The Apps Script web app was not found. Check the GOOGLE_APPS_SCRIPT_URL for this test environment and redeploy the script.';
+    }
+    return 'The server returned status $statusCode.';
   }
 }
 

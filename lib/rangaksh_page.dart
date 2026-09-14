@@ -124,6 +124,8 @@ class SiteColors {
   static const mutedBorder = Color(0xBB8B8383);
 }
 
+const _rangakshVenueMapsUrl = 'https://maps.app.goo.gl/BAu8L18WaHAXpfJ2A';
+
 class LayoutValues {
   const LayoutValues(this.width);
   final double width;
@@ -321,7 +323,13 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 372,
+              top: 370,
+              left: 0,
+              right: 0,
+              child: const _MobileHeroLocation(),
+            ),
+            Positioned(
+              top: 424,
               left: 0,
               right: 0,
               child: Text(
@@ -336,7 +344,7 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 402,
+              top: 454,
               left: 0,
               right: 0,
               child: Row(
@@ -355,7 +363,7 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 462,
+              top: 514,
               left: 0,
               right: 0,
               child: Row(
@@ -371,6 +379,55 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileHeroLocation extends StatelessWidget {
+  const _MobileHeroLocation();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _MobileHeroLocationButton(
+          onTap: () => openExternalUrl(_rangakshVenueMapsUrl),
+        ),
+      ],
+    );
+  }
+}
+
+class _MobileHeroLocationButton extends StatelessWidget {
+  const _MobileHeroLocationButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 45,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: const Icon(Icons.location_on_outlined, size: 21),
+        label: Text(
+          'VIEW LOCATION ON MAPS',
+          style: GoogleFonts.montserrat(
+            fontSize: 14.25,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .52,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: SiteColors.cream,
+          side: BorderSide(color: SiteColors.cream.withValues(alpha: .58)),
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
@@ -419,13 +476,7 @@ class _HeroContent extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Image.asset(
-                values.mobile
-                    ? 'lib/assets/mobile_hero.png'
-                    : 'lib/assets/desktop_hero.png',
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
-              ),
+              const _DesktopHeroArtwork(),
               SizedBox(height: values.mobile ? 34 : 52),
               values.mobile
                   ? Column(
@@ -475,6 +526,76 @@ class _HeroContent extends StatelessWidget {
                       ],
                     ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopHeroArtwork extends StatelessWidget {
+  const _DesktopHeroArtwork();
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1711 / 370,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final scale = constraints.maxWidth / 1711;
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                'lib/assets/desktop_hero.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+              Positioned(
+                left: 1088 * scale,
+                top: 306 * scale,
+                child: _HeroLocationButton(
+                  scale: scale,
+                  onTap: () => openExternalUrl(_rangakshVenueMapsUrl),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HeroLocationButton extends StatelessWidget {
+  const _HeroLocationButton({required this.scale, required this.onTap});
+
+  final double scale;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return HoverLift(
+      child: SizedBox(
+        height: 54 * scale,
+        child: OutlinedButton.icon(
+          onPressed: onTap,
+          icon: Icon(Icons.location_on_outlined, size: 25.5 * scale),
+          label: Text(
+            'VIEW LOCATION ON MAPS',
+            style: GoogleFonts.montserrat(
+              fontSize: 18 * scale,
+              fontWeight: FontWeight.w600,
+              letterSpacing: .75 * scale,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: SiteColors.cream,
+            side: BorderSide(color: SiteColors.cream.withValues(alpha: .58)),
+            padding: EdgeInsets.symmetric(horizontal: 21 * scale),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12 * scale),
+            ),
           ),
         ),
       ),
@@ -1791,10 +1912,17 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
+  final _ticketCount = TextEditingController(text: '1');
   bool _audienceEntry = false;
   late bool _djGarba = widget.initialDjGarba;
 
-  int get _subtotal => (_audienceEntry ? 50 : 0) + (_djGarba ? 150 : 0);
+  int get _ticketCountValue {
+    final count = int.tryParse(_ticketCount.text.trim());
+    return count == null || count < 1 ? 1 : count;
+  }
+
+  int get _packageSubtotal => (_audienceEntry ? 50 : 0) + (_djGarba ? 150 : 0);
+  int get _subtotal => _packageSubtotal * _ticketCountValue;
 
   String get _packageName {
     final selected = [
@@ -1805,16 +1933,29 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _ticketCount.addListener(_refreshSubtotal);
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _email.dispose();
     _phone.dispose();
+    _ticketCount
+      ..removeListener(_refreshSubtotal)
+      ..dispose();
     super.dispose();
+  }
+
+  void _refreshSubtotal() {
+    if (mounted) setState(() {});
   }
 
   void _continueToPayment() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_subtotal == 0) {
+    if (_packageSubtotal == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please choose at least one package.')),
       );
@@ -1828,6 +1969,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
         phoneNumber: _phone.text.trim(),
         packageName: _packageName,
         amount: _subtotal,
+        ticketCount: _ticketCountValue,
       ),
     );
   }
@@ -1998,6 +2140,22 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
                         selected: _djGarba,
                         onTap: () {
                           setState(() => _djGarba = !_djGarba);
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _TicketDialogField(
+                        label: 'TICKET COUNT',
+                        controller: _ticketCount,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(2),
+                        ],
+                        validator: (value) {
+                          final count = int.tryParse(value ?? '');
+                          return count != null && count >= 1 && count <= 20
+                              ? null
+                              : 'Enter a ticket count between 1 and 20';
                         },
                       ),
                       SizedBox(height: mobile ? 26 : 34),

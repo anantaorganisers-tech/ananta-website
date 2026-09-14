@@ -53,7 +53,8 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {
           final mobile = constraints.maxWidth < 700;
-          final showOrganizerName = !(mobile && hideOrganizerNameOnMobile);
+          final mobileRangakshMode = mobile && hideOrganizerNameOnMobile;
+          final showOrganizerName = !mobileRangakshMode || !showRangakshLogo;
           return Padding(
             padding: EdgeInsets.all(mobile ? 10 : 16),
             child: Container(
@@ -94,31 +95,33 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ] else
                     const Spacer(),
-                  AnimatedOpacity(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutCubic,
-                    opacity: showRangakshLogo ? 1 : 0,
-                    child: AnimatedSlide(
+                  if (showOrganizerName && mobileRangakshMode) const Spacer(),
+                  if (!mobileRangakshMode || showRangakshLogo)
+                    AnimatedOpacity(
                       duration: const Duration(milliseconds: 240),
                       curve: Curves.easeOutCubic,
-                      offset: showRangakshLogo
-                          ? Offset.zero
-                          : const Offset(.08, 0),
-                      child: Transform.translate(
-                        // Keep the mobile mark inside the rounded toolbar.
-                        offset: Offset(mobile ? 0 : 10, 0),
-                        child: SizedBox(
-                          width: mobile ? 142 : 250,
-                          height: mobile ? 100 : 100,
-                          child: Image.asset(
-                            'lib/assets/appbar_rangaksh.png',
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
+                      opacity: showRangakshLogo ? 1 : 0,
+                      child: AnimatedSlide(
+                        duration: const Duration(milliseconds: 240),
+                        curve: Curves.easeOutCubic,
+                        offset: showRangakshLogo
+                            ? Offset.zero
+                            : const Offset(.08, 0),
+                        child: Transform.translate(
+                          // Keep the mobile mark inside the rounded toolbar.
+                          offset: Offset(mobile ? 0 : 10, 0),
+                          child: SizedBox(
+                            width: mobile ? 142 : 250,
+                            height: mobile ? 100 : 100,
+                            child: Image.asset(
+                              'lib/assets/appbar_rangaksh.png',
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
