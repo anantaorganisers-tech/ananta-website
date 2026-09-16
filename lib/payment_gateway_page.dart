@@ -52,6 +52,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
   final _transactionId = TextEditingController();
   bool _isSubmitting = false;
   bool _paymentRecorded = false;
+  bool _exitConfirmed = false;
 
   int get _payableAmount => widget.visitor?.amount ?? widget.product.amount;
   String get _checkoutHeading =>
@@ -106,7 +107,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
       } else {
         final passIds = _generatePassIds(widget.visitor!.ticketCount);
         final qrImages = await Future.wait(passIds.map(_createPassQrImage));
-        final pass = await VisitorPassSubmissionService.submitPayment(
+        await VisitorPassSubmissionService.submitPayment(
           registrant: widget.visitor!,
           upiId: _upiId.text.trim(),
           transactionId: _transactionId.text.trim(),
@@ -118,7 +119,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
           _paymentRecorded = true;
           _isSubmitting = false;
         });
-        await _showVisitorPasses(pass.passIds);
+        await _showVisitorBookingConfirmation();
         if (!mounted) return;
         Navigator.of(
           context,
@@ -206,70 +207,30 @@ class _PaydeskPageState extends State<PaydeskPage> {
     ),
   );
 
-  Future<void> _showVisitorPasses(List<String> passIds) => showDialog<void>(
+  Future<void> _showVisitorBookingConfirmation() => showDialog<void>(
     context: context,
-    builder: (context) {
-      final mobile = MediaQuery.sizeOf(context).width < 700;
-      final qrSize = mobile ? 170.0 : 190.0;
-      return Dialog(
-        backgroundColor: _PaymentColors.field,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: _PaymentColors.gold),
+    builder: (context) => AlertDialog(
+      backgroundColor: _PaymentColors.field,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: _PaymentColors.gold),
+      ),
+      title: Text(
+        'Booking Submitted',
+        style: GoogleFonts.montserrat(
+          color: _PaymentColors.cream,
+          fontWeight: FontWeight.w700,
         ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: mobile ? 340 : 620,
-            maxHeight: MediaQuery.sizeOf(context).height * .86,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    passIds.length == 1
-                        ? 'Your Rangaksh Ticket'
-                        : 'Your Rangaksh Tickets',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.montserrat(
-                      color: _PaymentColors.cream,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 18,
-                    runSpacing: 18,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (final passId in passIds)
-                        _VisitorPassQrCard(passId: passId, qrSize: qrSize),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Take a screenshot of these passes. Present each QR code at entry.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.montserrat(
-                      color: _PaymentColors.cream.withValues(alpha: .84),
-                      fontSize: 13,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: _dialogOkButton(context),
-                  ),
-                ],
-              ),
-            ),
-          ),
+      ),
+      content: Text(
+        'Your Booking is submitted. You will receive an email with your ticket QR code after your payment is reviewed',
+        style: GoogleFonts.montserrat(
+          color: _PaymentColors.cream.withValues(alpha: .84),
+          height: 1.35,
         ),
-      );
-    },
+      ),
+      actions: [_dialogOkButton(context)],
+    ),
   );
 
   Widget _dialogOkButton(BuildContext context) => TextButton(
@@ -278,183 +239,208 @@ class _PaydeskPageState extends State<PaydeskPage> {
     child: const Text('OK'),
   );
 
+  Future<void> _confirmExit() async {
+    if (_isSubmitting) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait while your payment is saved.'),
+        ),
+      );
+      return;
+    }
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _PaymentColors.field,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: _PaymentColors.gold),
+        ),
+        title: Text(
+          'Exit Checkout?',
+          style: GoogleFonts.montserrat(
+            color: _PaymentColors.cream,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to leave this payment page?',
+          style: GoogleFonts.montserrat(
+            color: _PaymentColors.cream.withValues(alpha: .84),
+            height: 1.35,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            child: const Text('EXIT'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || shouldExit != true) return;
+    setState(() => _exitConfirmed = true);
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/rangaksh', (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 700;
     final scale = _paymentScale(context);
 
-    return Scaffold(
-      appBar: const CompetitionAppBar(),
-      bottomSheet: _isSubmitting
-          ? const LinearProgressIndicator(
-              minHeight: 4,
-              color: _PaymentColors.gold,
-              backgroundColor: _PaymentColors.field,
-            )
-          : null,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              color: _PaymentColors.page,
-              padding: EdgeInsets.fromLTRB(
-                mobile ? 22 : 42 * scale,
-                mobile ? 48 : 70 * scale,
-                mobile ? 22 : 42 * scale,
-                mobile ? 82 : 118 * scale,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 460 * scale),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          _checkoutHeading,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.montserrat(
-                            color: _PaymentColors.cream,
-                            fontSize: (mobile ? 27 : 34) * scale,
-                            fontWeight: FontWeight.w700,
-                            height: 1.08,
-                          ),
-                        ),
-                        SizedBox(height: 10 * scale),
-                        Text(
-                          'CHECKOUT',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.montserrat(
-                            color: _PaymentColors.cream.withValues(alpha: .8),
-                            fontSize: (mobile ? 11 : 13) * scale,
-                            letterSpacing: 2.2,
-                          ),
-                        ),
-                        if (_checkoutPackageSummary != null) ...[
-                          SizedBox(height: 10 * scale),
+    return PopScope(
+      canPop: _exitConfirmed,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _confirmExit();
+      },
+      child: Scaffold(
+        appBar: const CompetitionAppBar(),
+        bottomSheet: _isSubmitting
+            ? const LinearProgressIndicator(
+                minHeight: 4,
+                color: _PaymentColors.gold,
+                backgroundColor: _PaymentColors.field,
+              )
+            : null,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                color: _PaymentColors.page,
+                padding: EdgeInsets.fromLTRB(
+                  mobile ? 22 : 42 * scale,
+                  mobile ? 48 : 70 * scale,
+                  mobile ? 22 : 42 * scale,
+                  mobile ? 82 : 118 * scale,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 460 * scale),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           Text(
-                            _checkoutPackageSummary!,
+                            _checkoutHeading,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.montserrat(
-                              color: _PaymentColors.gold,
-                              fontSize: (mobile ? 11 : 12) * scale,
+                              color: _PaymentColors.cream,
+                              fontSize: (mobile ? 27 : 34) * scale,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: .7,
+                              height: 1.08,
+                            ),
+                          ),
+                          SizedBox(height: 10 * scale),
+                          Text(
+                            'CHECKOUT',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.montserrat(
+                              color: _PaymentColors.cream.withValues(alpha: .8),
+                              fontSize: (mobile ? 11 : 13) * scale,
+                              letterSpacing: 2.2,
+                            ),
+                          ),
+                          if (_checkoutPackageSummary != null) ...[
+                            SizedBox(height: 10 * scale),
+                            Text(
+                              _checkoutPackageSummary!,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.montserrat(
+                                color: _PaymentColors.gold,
+                                fontSize: (mobile ? 11 : 12) * scale,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: .7,
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: (mobile ? 44 : 58) * scale),
+                          _QrPanel(amount: _payableAmount, scale: scale),
+                          SizedBox(height: 34 * scale),
+                          _PaymentField(
+                            label: 'Enter UPI ID',
+                            controller: _upiId,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              final trimmed = value?.trim() ?? '';
+                              return trimmed.contains('@') &&
+                                      trimmed.length >= 5
+                                  ? null
+                                  : 'Enter a valid UPI ID';
+                            },
+                          ),
+                          SizedBox(height: 24 * scale),
+                          _PaymentField(
+                            label: 'Enter Transaction ID',
+                            controller: _transactionId,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z0-9_-]'),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: (mobile ? 46 : 62) * scale),
+                          Align(
+                            alignment: Alignment.center,
+                            child: SizedBox(
+                              width: (mobile ? 230 : 250) * scale,
+                              height: 54 * scale,
+                              child: OutlinedButton(
+                                onPressed: _isSubmitting || _paymentRecorded
+                                    ? null
+                                    : _checkout,
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF201713),
+                                  foregroundColor: _PaymentColors.cream,
+                                  disabledForegroundColor: _PaymentColors.cream,
+                                  disabledBackgroundColor: const Color(
+                                    0xFF201713,
+                                  ),
+                                  side: const BorderSide(
+                                    color: _PaymentColors.gold,
+                                  ),
+                                  disabledIconColor: _PaymentColors.cream,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                ),
+                                child: Text(
+                                  _isSubmitting
+                                      ? 'PLEASE WAIT'
+                                      : _paymentRecorded
+                                      ? 'RECORDED'
+                                      : 'CHECKOUT',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 14 * scale,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 6,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
-                        SizedBox(height: (mobile ? 44 : 58) * scale),
-                        _QrPanel(amount: _payableAmount, scale: scale),
-                        SizedBox(height: 34 * scale),
-                        _PaymentField(
-                          label: 'Enter UPI ID',
-                          controller: _upiId,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            final trimmed = value?.trim() ?? '';
-                            return trimmed.contains('@') && trimmed.length >= 5
-                                ? null
-                                : 'Enter a valid UPI ID';
-                          },
-                        ),
-                        SizedBox(height: 24 * scale),
-                        _PaymentField(
-                          label: 'Enter Transaction ID',
-                          controller: _transactionId,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[a-zA-Z0-9_-]'),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: (mobile ? 46 : 62) * scale),
-                        Align(
-                          alignment: Alignment.center,
-                          child: SizedBox(
-                            width: (mobile ? 230 : 250) * scale,
-                            height: 54 * scale,
-                            child: OutlinedButton(
-                              onPressed: _isSubmitting || _paymentRecorded
-                                  ? null
-                                  : _checkout,
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: const Color(0xFF201713),
-                                foregroundColor: _PaymentColors.cream,
-                                side: const BorderSide(
-                                  color: _PaymentColors.gold,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(9),
-                                ),
-                              ),
-                              child: Text(
-                                _isSubmitting
-                                    ? 'SAVING...'
-                                    : _paymentRecorded
-                                    ? 'RECORDED'
-                                    : 'CHECKOUT',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 14 * scale,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 6,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const _PaymentFooter(),
-          ],
+              const _PaymentFooter(),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-}
-
-class _VisitorPassQrCard extends StatelessWidget {
-  const _VisitorPassQrCard({required this.passId, required this.qrSize});
-
-  final String passId;
-  final double qrSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: qrSize + 20,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            color: Colors.white,
-            child: SizedBox.square(
-              dimension: qrSize,
-              child: QrImageView(
-                data: passId,
-                version: QrVersions.auto,
-                errorCorrectionLevel: QrErrorCorrectLevel.M,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            passId,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.montserrat(
-              color: _PaymentColors.gold,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
       ),
     );
   }
