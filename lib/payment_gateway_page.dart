@@ -1,10 +1,8 @@
 import 'dart:math';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import 'one_act_page.dart';
 import 'one_act_submission.dart';
@@ -106,13 +104,11 @@ class _PaydeskPageState extends State<PaydeskPage> {
         await _showOneActConfirmation();
       } else {
         final passIds = _generatePassIds(widget.visitor!.ticketCount);
-        final qrImages = await Future.wait(passIds.map(_createPassQrImage));
         await VisitorPassSubmissionService.submitPayment(
           registrant: widget.visitor!,
           upiId: _upiId.text.trim(),
           transactionId: _transactionId.text.trim(),
           passIds: passIds,
-          qrImageBytes: qrImages,
         );
         if (!mounted) return;
         setState(() {
@@ -147,21 +143,6 @@ class _PaydeskPageState extends State<PaydeskPage> {
     } finally {
       if (mounted && _isSubmitting) setState(() => _isSubmitting = false);
     }
-  }
-
-  Future<Uint8List> _createPassQrImage(String passId) async {
-    final imageData = await QrPainter(
-      data: passId,
-      version: QrVersions.auto,
-      errorCorrectionLevel: QrErrorCorrectLevel.M,
-      gapless: true,
-    ).toImageData(720, format: ui.ImageByteFormat.png);
-    if (imageData == null) {
-      throw const VisitorPassSubmissionException(
-        'Could not generate the pass QR code.',
-      );
-    }
-    return imageData.buffer.asUint8List();
   }
 
   List<String> _generatePassIds(int count) {

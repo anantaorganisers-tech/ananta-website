@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -37,13 +36,7 @@ class VisitorPassSubmissionService {
     required String upiId,
     required String transactionId,
     required List<String> passIds,
-    required List<Uint8List> qrImageBytes,
   }) async {
-    if (passIds.length != qrImageBytes.length) {
-      throw const VisitorPassSubmissionException(
-        'Could not prepare all requested ticket QR codes.',
-      );
-    }
     final body = await _post({
       'formType': 'visitorPassPayment',
       'submittedAt': DateTime.now().toIso8601String(),
@@ -57,8 +50,7 @@ class VisitorPassSubmissionService {
       'transactionId': transactionId,
       'passId': passIds.first,
       'passIds': jsonEncode(passIds),
-      'qrImageBase64': base64Encode(qrImageBytes.first),
-      'qrImagesBase64': jsonEncode(qrImageBytes.map(base64Encode).toList()),
+      'qrBaseUrl': Uri.base.resolve('/api/qr').toString(),
     });
     final returnedPassIds = _readReturnedPassIds(body);
     if (returnedPassIds.isEmpty) {

@@ -52,7 +52,7 @@ const VISITOR_PASS_HEADERS = [
   'Amount (INR)',
   'Payment Status',
   'Payment Recorded At',
-  'Pass QR Screenshot',
+  'Pass QR Code Links',
   'Package',
   'Ticket Count',
 ];
@@ -192,21 +192,17 @@ function saveVisitorPassPayment_(payload) {
   ensureHeaders_(sheet, VISITOR_PASS_HEADERS);
   const existingRow = findMatchingRow_(sheet, 7, payload.transactionId);
   const passIds = readJsonArray_(payload.passIds, payload.passId);
-  const qrImagesBase64 = readJsonArray_(
-    payload.qrImagesBase64,
-    payload.qrImageBase64,
-  );
   const ticketCount = Number(payload.ticketCount || passIds.length);
 
   if (existingRow) {
     const existingPassId = sheet.getRange(existingRow, 2).getDisplayValue();
     const qrLink = sheet.getRange(existingRow, 11).getDisplayValue();
     if (!qrLink) {
-      saveVisitorPassQrsAtRow_(
+      saveVisitorPassQrLinksAtRow_(
         sheet,
         existingRow,
         existingPassId ? existingPassId.split(/\s+/).filter(Boolean) : passIds,
-        qrImagesBase64,
+        payload.qrBaseUrl
       );
     }
     return jsonResponse_({
@@ -219,7 +215,11 @@ function saveVisitorPassPayment_(payload) {
     });
   }
 
-  if (passIds.some(function (passId) { return passIdAlreadyRecorded_(sheet, passId); })) {
+  if (
+    passIds.some(function (passId) {
+      return passIdAlreadyRecorded_(sheet, passId);
+    })
+  ) {
     throw new Error('Could not allocate a unique pass ID. Please submit again.');
   }
 
@@ -240,7 +240,12 @@ function saveVisitorPassPayment_(payload) {
     ticketCount,
   ]);
 
-  saveVisitorPassQrsAtRow_(sheet, sheet.getLastRow(), passIds, qrImagesBase64);
+  saveVisitorPassQrLinksAtRow_(
+    sheet,
+    sheet.getLastRow(),
+    passIds,
+    payload.qrBaseUrl
+  );
 
   return jsonResponse_({success: true, passId: passIds[0], passIds: passIds});
 }
@@ -264,6 +269,42 @@ function saveVisitorPassQr_(payload) {
 
 function saveVisitorPassQrAtRow_(sheet, row, passId, qrImageBase64) {
   saveVisitorPassQrsAtRow_(sheet, row, [passId], [qrImageBase64]);
+}
+
+function saveVisitorPassQrLinksAtRow_(sheet, row, passIds, qrBaseUrl) {
+  const links = passIds.map(function (passId) {
+    return {
+      passId: passId,
+      url: buildVisitorPassQrUrl_(passId, qrBaseUrl),
+    };
+  });
+
+  const text = links
+    .map(function (linkInfo, index) {
+      return 'QR ' + (index + 1) + ': ' + linkInfo.passId;
+    })
+    .join('\n');
+  const builder = SpreadsheetApp.newRichTextValue().setText(text);
+  let offset = 0;
+  links.forEach(function (linkInfo, index) {
+    const label = 'QR ' + (index + 1) + ': ' + linkInfo.passId;
+    builder.setLinkUrl(offset, offset + label.length, linkInfo.url);
+    offset += label.length + 1;
+  });
+  sheet.getRange(row, 11).setRichTextValue(builder.build());
+}
+
+function buildVisitorPassQrUrl_(passId, qrBaseUrl) {
+  const properties = PropertiesService.getScriptProperties();
+  const baseUrl =
+    qrBaseUrl || properties.getProperty('VISITOR_PASS_QR_BASE_URL');
+  if (!baseUrl) {
+    throw new Error(
+      'Missing script property: VISITOR_PASS_QR_BASE_URL. Set it to your Vercel /api/qr URL.'
+    );
+  }
+  const separator = baseUrl.indexOf('?') === -1 ? '?' : '&';
+  return baseUrl + separator + 'id=' + encodeURIComponent(passId);
 }
 
 function saveVisitorPassQrsAtRow_(sheet, row, passIds, qrImagesBase64) {
@@ -351,7 +392,6 @@ function validateVisitorPassPayload_(payload) {
     'upiId',
     'transactionId',
     'passId',
-    'qrImageBase64',
   ].forEach(function (field) {
     if (!payload[field]) {
       throw new Error('Missing required field: ' + field);
@@ -365,11 +405,7 @@ function validateVisitorPassPayload_(payload) {
   }
 
   const passIds = readJsonArray_(payload.passIds, payload.passId);
-  const qrImagesBase64 = readJsonArray_(
-    payload.qrImagesBase64,
-    payload.qrImageBase64,
-  );
-  if (passIds.length !== ticketCount || qrImagesBase64.length !== ticketCount) {
+  if (passIds.length !== ticketCount) {
     throw new Error('The ticket count does not match the generated passes.');
   }
 
