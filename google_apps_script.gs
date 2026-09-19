@@ -4,6 +4,7 @@ const ONE_ACT_BROCHURE_FOLDER_NAME = 'Rangaksh One Act Brochures';
 const VISITOR_PASS_SHEET_NAME = 'VisitorPass';
 const VISITOR_PASS_QR_FOLDER_NAME = 'Rangaksh Visitor Pass QR Codes';
 const SPONSOR_SHEET_NAME = 'Sponsors';
+const STALL_REQUESTS_SHEET_NAME = 'StallRequests';
 const MAX_BROCHURE_BYTES = 10 * 1024 * 1024;
 const MAX_QR_IMAGE_BYTES = 2 * 1024 * 1024;
 
@@ -70,6 +71,17 @@ const SPONSOR_HEADERS = [
   'Approval Status',
 ];
 
+const STALL_REQUEST_HEADERS = [
+  'Submitted At',
+  'Owner Name',
+  'Shop Name',
+  'Type of Shop',
+  'Time of Day for Stall',
+  'Contact Number',
+  'E-Mail Address',
+  'Approval Status',
+];
+
 function doPost(e) {
   try {
     const payload = parsePayload_(e);
@@ -85,6 +97,9 @@ function doPost(e) {
     }
     if (payload.formType === 'sponsor') {
       return saveSponsorApplication_(payload);
+    }
+    if (payload.formType === 'stallSetup') {
+      return saveStallRequest_(payload);
     }
 
     return saveSecretariatApplication_(payload);
@@ -139,6 +154,25 @@ function saveSponsorApplication_(payload) {
     payload.operationalAddress || '',
     payload.deliverables || '',
     payload.queries || '',
+    'Pending',
+  ]);
+
+  return jsonResponse_({success: true, row: sheet.getLastRow()});
+}
+
+function saveStallRequest_(payload) {
+  validateStallRequestPayload_(payload);
+
+  const sheet = getOrCreateSheet_(STALL_REQUESTS_SHEET_NAME);
+  ensureHeaders_(sheet, STALL_REQUEST_HEADERS);
+  sheet.appendRow([
+    payload.submittedAt || new Date().toISOString(),
+    payload.ownerName || '',
+    payload.shopName || '',
+    payload.shopType || '',
+    payload.stallTime || '',
+    payload.contactNumber || '',
+    payload.emailAddress || '',
     'Pending',
   ]);
 
@@ -354,6 +388,21 @@ function validateSponsorPayload_(payload) {
     'sponsorshipPackage',
     'operationalAddress',
     'deliverables',
+  ].forEach(function (field) {
+    if (!payload[field]) {
+      throw new Error('Missing required field: ' + field);
+    }
+  });
+}
+
+function validateStallRequestPayload_(payload) {
+  [
+    'ownerName',
+    'shopName',
+    'shopType',
+    'stallTime',
+    'contactNumber',
+    'emailAddress',
   ].forEach(function (field) {
     if (!payload[field]) {
       throw new Error('Missing required field: ' + field);

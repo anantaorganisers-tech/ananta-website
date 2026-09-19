@@ -10,6 +10,7 @@ import 'one_act_submission.dart';
 import 'payment_gateway_page.dart';
 import 'rangaksh_page.dart';
 import 'sec_form.dart';
+import 'stall_setup_form.dart';
 import 'sponsorship_form.dart';
 import 'visitor_pass_submission.dart';
 
@@ -45,6 +46,7 @@ class MainApp extends StatelessWidget {
         '/participant' => const ParticipantForm(),
         '/one-act' => const OneActPage(),
         '/sponsor-form' => const SponsorshipForm(),
+        '/stall-setup' => const StallSetupForm(),
         _ => const AnantaPage(),
       },
       routes: {
@@ -54,6 +56,7 @@ class MainApp extends StatelessWidget {
         '/participant': (_) => const ParticipantForm(),
         '/one-act': (_) => const OneActPage(),
         '/sponsor-form': (_) => const SponsorshipForm(),
+        '/stall-setup': (_) => const StallSetupForm(),
         '/paydesk': (_) => const PaydeskPage(product: PaydeskProduct.oneAct),
         '/paymentgateway': (_) =>
             const PaydeskPage(product: PaydeskProduct.oneAct),

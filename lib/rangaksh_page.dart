@@ -378,6 +378,20 @@ class _MobileHeroContent extends StatelessWidget {
                 ],
               ),
             ),
+            Positioned(
+              top: 574,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _CompactHeroButton(
+                    label: 'Set Your Stall',
+                    onTap: () => openRouteInNewTab('/stall-setup'),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -497,6 +511,11 @@ class _HeroContent extends StatelessWidget {
                         ),
                         const SizedBox(height: 14),
                         _HeroButton(
+                          label: 'SET YOUR STALL',
+                          onTap: () => openRouteInNewTab('/stall-setup'),
+                        ),
+                        const SizedBox(height: 14),
+                        _HeroButton(
                           label: 'BOOK YOUR TICKETS',
                           onTap: onTickets,
                         ),
@@ -518,6 +537,10 @@ class _HeroContent extends StatelessWidget {
                         _HeroButton(
                           label: 'SPONSOR US',
                           onTap: () => openRouteInNewTab('/sponsor-form'),
+                        ),
+                        _HeroButton(
+                          label: 'SET YOUR STALL',
+                          onTap: () => openRouteInNewTab('/stall-setup'),
                         ),
                         _HeroButton(
                           label: 'BOOK YOUR TICKETS',
