@@ -111,7 +111,7 @@ def _make_ticket(pass_id):
     card_box = (58, 54, 1022, 1198)
     _rounded_rectangle(draw, card_box, 28, fill=MAROON, outline=GOLD, width=3)
 
-    heading_font = _load_font(29, bold=True)
+    heading_font = _load_font(12, bold=True)
     _center_text(
         draw,
         (canvas_width / 2, 138),
@@ -121,7 +121,7 @@ def _make_ticket(pass_id):
         spacing=7,
     )
 
-    pass_font = _fit_font(draw, pass_id, 760, 78, 42, bold=True)
+    pass_font = _fit_font(draw, pass_id, 760, 40, 40, bold=True)
     _center_text(draw, (canvas_width / 2, 215), pass_id, pass_font, CREAM)
 
     qr_outer = (208, 364, 872, 998)
