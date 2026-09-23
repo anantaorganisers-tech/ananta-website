@@ -37,12 +37,12 @@ class _RangakshPageState extends State<RangakshPage> {
   }
 
   bool _handleScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical || notification.depth != 0) {
+      return false;
+    }
+
     final width = MediaQuery.sizeOf(context).width;
-    final heroHeight = width < 768
-        ? 640.0
-        : width < 1200
-        ? 690.0
-        : 830.0;
+    final heroHeight = _heroDesignHeightForWidth(width);
     final showLogo = notification.metrics.pixels >= heroHeight;
     if (showLogo != _showAppBarRangakshLogo) {
       setState(() => _showAppBarRangakshLogo = showLogo);
@@ -112,6 +112,12 @@ class _RangakshPageState extends State<RangakshPage> {
       ),
     );
   }
+}
+
+double _heroDesignHeightForWidth(double width) {
+  if (width < 768) return 735;
+  if (width < 1200) return 690;
+  return 830;
 }
 
 class SiteColors {
@@ -247,11 +253,7 @@ class HeroSection extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final values = LayoutValues(constraints.maxWidth);
-        final designHeight = values.mobile
-            ? 735.0
-            : values.tablet
-            ? 690.0
-            : 830.0;
+        final designHeight = _heroDesignHeightForWidth(constraints.maxWidth);
         final height = MediaQuery.sizeOf(context).height > designHeight
             ? MediaQuery.sizeOf(context).height
             : designHeight;
@@ -313,7 +315,7 @@ class _MobileHeroContent extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Positioned(
-              top: 135,
+              top: 105,
               left: 24,
               right: 24,
               child: Image.asset(
@@ -323,13 +325,13 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 370,
+              top: 315,
               left: 0,
               right: 0,
               child: const _MobileHeroLocation(),
             ),
             Positioned(
-              top: 424,
+              top: 369,
               left: 0,
               right: 0,
               child: Text(
@@ -344,7 +346,7 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 454,
+              top: 399,
               left: 0,
               right: 0,
               child: Row(
@@ -363,7 +365,7 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 514,
+              top: 459,
               left: 0,
               right: 0,
               child: Row(
@@ -379,7 +381,7 @@ class _MobileHeroContent extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 574,
+              top: 519,
               left: 0,
               right: 0,
               child: Row(
