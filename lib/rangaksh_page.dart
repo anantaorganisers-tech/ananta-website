@@ -248,7 +248,7 @@ class HeroSection extends StatelessWidget {
       builder: (context, constraints) {
         final values = LayoutValues(constraints.maxWidth);
         final designHeight = values.mobile
-            ? 640.0
+            ? 735.0
             : values.tablet
             ? 690.0
             : 830.0;
