@@ -7,6 +7,8 @@ const SPONSOR_SHEET_NAME = 'Sponsors';
 const STALL_REQUESTS_SHEET_NAME = 'StallRequests';
 const MAX_BROCHURE_BYTES = 10 * 1024 * 1024;
 const MAX_QR_IMAGE_BYTES = 2 * 1024 * 1024;
+const VISITOR_AUDIENCE_PRICE = 80;
+const VISITOR_DJ_GARBA_PRICE = 200;
 
 const APPLICATION_HEADERS = [
   'Submitted At',
@@ -458,9 +460,41 @@ function validateVisitorPassPayload_(payload) {
     throw new Error('The ticket count does not match the generated passes.');
   }
 
-  if (![80, 200, 280].includes(amount / ticketCount)) {
-    throw new Error('Invalid visitor pass amount.');
+  const expectedAmount = expectedVisitorPassAmount_(
+    payload.packageName,
+    ticketCount,
+  );
+  if (amount !== expectedAmount) {
+    throw new Error(
+      'Invalid visitor pass amount. Received ₹' +
+        amount +
+        ' for ' +
+        ticketCount +
+        ' ticket(s), expected ₹' +
+        expectedAmount +
+        '.',
+    );
   }
+}
+
+function expectedVisitorPassAmount_(packageName, ticketCount) {
+  const normalizedPackage = String(packageName || '').toUpperCase();
+  let perTicketAmount = 0;
+
+  if (normalizedPackage.indexOf('COMPETITION') !== -1) {
+    perTicketAmount += VISITOR_AUDIENCE_PRICE;
+  }
+  if (
+    normalizedPackage.indexOf('DJ') !== -1 ||
+    normalizedPackage.indexOf('GARBA') !== -1
+  ) {
+    perTicketAmount += VISITOR_DJ_GARBA_PRICE;
+  }
+  if (perTicketAmount <= 0) {
+    throw new Error('Invalid visitor pass package.');
+  }
+
+  return perTicketAmount * ticketCount;
 }
 
 function saveBrochure_(payload) {
