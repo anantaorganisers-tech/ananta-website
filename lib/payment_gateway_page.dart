@@ -286,7 +286,9 @@ class _PaydeskPageState extends State<PaydeskPage> {
         _confirmExit();
       },
       child: Scaffold(
-        appBar: const CompetitionAppBar(showFrame: false),
+        extendBodyBehindAppBar: true,
+        backgroundColor: _PaymentColors.page,
+        appBar: const CompetitionAppBar(),
         bottomSheet: _isSubmitting
             ? const LinearProgressIndicator(
                 minHeight: 4,
@@ -302,7 +304,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
                 color: _PaymentColors.page,
                 padding: EdgeInsets.fromLTRB(
                   mobile ? 22 : 42 * scale,
-                  mobile ? 48 : 70 * scale,
+                  mobile ? 150 : 172 * scale,
                   mobile ? 22 : 42 * scale,
                   mobile ? 82 : 118 * scale,
                 ),
