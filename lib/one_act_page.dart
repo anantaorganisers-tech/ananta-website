@@ -31,10 +31,12 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.showRangakshLogo = true,
     this.hideOrganizerNameOnMobile = false,
+    this.showFrame = true,
   });
 
   final bool showRangakshLogo;
   final bool hideOrganizerNameOnMobile;
+  final bool showFrame;
 
   @override
   Size get preferredSize => const Size.fromHeight(132);
@@ -60,17 +62,19 @@ class CompetitionAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Container(
               height: mobile ? 94 : null,
               padding: EdgeInsets.symmetric(horizontal: mobile ? 14 : 24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF530C1F),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x88000000),
-                    blurRadius: 14,
-                    offset: Offset(0, 7),
-                  ),
-                ],
-              ),
+              decoration: showFrame
+                  ? BoxDecoration(
+                      color: const Color(0xFF530C1F),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x88000000),
+                          blurRadius: 14,
+                          offset: Offset(0, 7),
+                        ),
+                      ],
+                    )
+                  : null,
               child: Row(
                 children: [
                   Image.asset(

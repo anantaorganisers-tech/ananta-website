@@ -286,7 +286,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
         _confirmExit();
       },
       child: Scaffold(
-        appBar: const CompetitionAppBar(),
+        appBar: const CompetitionAppBar(showFrame: false),
         bottomSheet: _isSubmitting
             ? const LinearProgressIndicator(
                 minHeight: 4,

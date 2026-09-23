@@ -648,11 +648,7 @@ class _EventsSection extends StatelessWidget {
               const SizedBox(height: 16),
               const _SectionDivider(),
               SizedBox(height: mobile ? 42 : 56),
-              Image.asset(
-                'lib/assets/ananta_portf/rangaksh_hero.png',
-                width: mobile ? 440 : 840,
-                filterQuality: FilterQuality.high,
-              ),
+              _RangakshEventHeroImage(width: mobile ? 440 : 840),
               SizedBox(height: mobile ? 42 : 54),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
@@ -674,6 +670,60 @@ class _EventsSection extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RangakshEventHeroImage extends StatelessWidget {
+  const _RangakshEventHeroImage({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    const sourceWidth = 1599.0;
+    const sourceHeight = 349.0;
+
+    return SizedBox(
+      width: width,
+      child: AspectRatio(
+        aspectRatio: sourceWidth / sourceHeight,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final scale = constraints.maxWidth / sourceWidth;
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'lib/assets/ananta_portf/rangaksh_hero.png',
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
+                Positioned(
+                  left: 1010 * scale,
+                  top: 226 * scale,
+                  child: Container(
+                    width: 565 * scale,
+                    height: 55 * scale,
+                    alignment: Alignment.centerLeft,
+                    color: _AnantaColors.hero,
+                    child: Text(
+                      'Venue- Vedanta Farms, Bhiwadi',
+                      maxLines: 1,
+                      style: GoogleFonts.montserrat(
+                        color: _AnantaColors.cream,
+                        fontSize: 33 * scale,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2.2 * scale,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
