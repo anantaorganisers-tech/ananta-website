@@ -3,6 +3,11 @@
   "buildCommand": "bash ./vercel-build.sh",
   "outputDirectory": "build/web",
   "installCommand": "",
+  "functions": {
+    "api/qr.py": {
+      "excludeFiles": "{build/**,.dart_tool/**,.git/**,android/**,ios/**,linux/**,macos/**,windows/**,test/**}"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

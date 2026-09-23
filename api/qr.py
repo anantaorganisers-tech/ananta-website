@@ -1,143 +1,110 @@
+import base64
+from html import escape
 from http.server import BaseHTTPRequestHandler
-from io import BytesIO
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import qrcode
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-ASSET_DIR = ROOT_DIR / "lib" / "assets"
-
-MAROON = "#5b0620"
+QR_FOOTER_PATH = Path(__file__).resolve().parents[1] / "lib" / "assets" / "qr_footer.png"
+MAROON = "#530B20"
 CREAM = "#fff3de"
 GOLD = "#c9a34a"
 BLACK = "#000000"
 WHITE = "#ffffff"
+_QR_FOOTER_DATA_URI = None
 
 
-def _load_font(size, bold=False):
-    candidates = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-        if bold
-        else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf"
-        if bold
-        else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
-    ]
-    for candidate in candidates:
-        try:
-            return ImageFont.truetype(candidate, size)
-        except OSError:
-            continue
-    return ImageFont.load_default()
+def _qr_footer_data_uri():
+    global _QR_FOOTER_DATA_URI
+    if _QR_FOOTER_DATA_URI is None:
+        encoded = base64.b64encode(QR_FOOTER_PATH.read_bytes()).decode("ascii")
+        _QR_FOOTER_DATA_URI = f"data:image/png;base64,{encoded}"
+    return _QR_FOOTER_DATA_URI
 
 
-def _fit_font(draw, text, max_width, start_size, min_size, bold=False):
-    size = start_size
-    while size >= min_size:
-        font = _load_font(size, bold=bold)
-        if draw.textbbox((0, 0), text, font=font)[2] <= max_width:
-            return font
-        size -= 2
-    return _load_font(min_size, bold=bold)
-
-
-def _center_text(draw, xy, text, font, fill, spacing=0):
-    x, y = xy
-    if spacing <= 0:
-        bbox = draw.textbbox((0, 0), text, font=font)
-        draw.text((x - (bbox[2] - bbox[0]) / 2, y), text, font=font, fill=fill)
-        return
-
-    widths = [draw.textlength(char, font=font) for char in text]
-    total_width = sum(widths) + spacing * (len(text) - 1)
-    cursor = x - total_width / 2
-    for char, width in zip(text, widths):
-        draw.text((cursor, y), char, font=font, fill=fill)
-        cursor += width + spacing
-
-
-def _rounded_rectangle(draw, box, radius, fill, outline=None, width=1):
-    draw.rounded_rectangle(box, radius=radius, fill=fill, outline=outline, width=width)
-
-
-def _make_qr(pass_id):
+def _qr_matrix(pass_id):
     qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=14,
+        box_size=1,
         border=2,
     )
     qr.add_data(pass_id)
     qr.make(fit=True)
-    return qr.make_image(fill_color=BLACK, back_color=WHITE).convert("RGB")
+    return qr.get_matrix()
 
 
-def _paste_contained(base, image_path, box):
-    try:
-        image = Image.open(image_path).convert("RGBA")
-    except OSError:
-        return
+def _qr_rects(pass_id, x, y, size):
+    matrix = _qr_matrix(pass_id)
+    module_count = len(matrix)
+    module_size = size / module_count
+    rects = []
 
-    left, top, right, bottom = box
-    max_width = right - left
-    max_height = bottom - top
-    scale = min(max_width / image.width, max_height / image.height)
-    size = (max(1, int(image.width * scale)), max(1, int(image.height * scale)))
-    image = image.resize(size, Image.Resampling.LANCZOS)
-    x = left + (max_width - size[0]) // 2
-    y = top + (max_height - size[1]) // 2
-    base.alpha_composite(image, (x, y))
+    for row_index, row in enumerate(matrix):
+        for col_index, dark in enumerate(row):
+            if not dark:
+                continue
+            rects.append(
+                '<rect x="{:.3f}" y="{:.3f}" width="{:.3f}" height="{:.3f}" />'.format(
+                    x + col_index * module_size,
+                    y + row_index * module_size,
+                    module_size + 0.04,
+                    module_size + 0.04,
+                )
+            )
+
+    return "\n".join(rects)
 
 
-def _make_ticket(pass_id):
-    canvas_width = 1080
-    canvas_height = 1280
-    image = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
+def _make_ticket_svg(pass_id):
+    safe_pass_id = escape(pass_id)
+    footer_src = _qr_footer_data_uri()
+    qr_rects = _qr_rects(pass_id, 305, 448, 470)
 
-    shadow = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
-    shadow_draw = ImageDraw.Draw(shadow)
-    _rounded_rectangle(
-        shadow_draw,
-        (72, 68, 1008, 1208),
-        30,
-        fill=(0, 0, 0, 190),
-    )
-    image.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(28)), (0, 0))
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1280" viewBox="0 0 1080 1280" role="img" aria-label="Rangaksh ticket {safe_pass_id}">
+  <defs>
+    <filter id="ticketShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+    <style>
+      .heading {{
+        fill: {CREAM};
+        font-family: Montserrat, Arial, sans-serif;
+        font-size: 36px;
+        font-weight: 600;
+        letter-spacing: 7px;
+      }}
+      .pass {{
+        fill: {CREAM};
+        font-family: Montserrat, Arial, sans-serif;
+        font-size: 60px;
+        font-weight: 800;
+      }}
+      .brand {{
+        fill: {CREAM};
+        font-family: Montserrat, Arial, sans-serif;
+        font-weight: 700;
+      }}
+    </style>
+  </defs>
 
-    draw = ImageDraw.Draw(image)
-    card_box = (58, 54, 1022, 1198)
-    _rounded_rectangle(draw, card_box, 28, fill=MAROON, outline=GOLD, width=3)
+  <rect width="1080" height="1280" fill="transparent"/>
+  <rect x="58" y="54" width="964" height="1144" rx="28" fill="{MAROON}" stroke="{GOLD}" stroke-width="3" filter="url(#ticketShadow)"/>
 
-    heading_font = _load_font(12, bold=True)
-    _center_text(
-        draw,
-        (canvas_width / 2, 138),
-        "YOUR RANGAKSH TICKET",
-        heading_font,
-        CREAM,
-        spacing=7,
-    )
+  <text x="540" y="150" text-anchor="middle" class="heading">YOUR RANGAKSH TICKET</text>
+  <text x="540" y="252" text-anchor="middle" class="pass">{safe_pass_id}</text>
 
-    pass_font = _fit_font(draw, pass_id, 760, 40, 40, bold=True)
-    _center_text(draw, (canvas_width / 2, 215), pass_id, pass_font, CREAM)
-
-    qr_outer = (208, 364, 872, 998)
-    _rounded_rectangle(draw, qr_outer, 28, fill=MAROON, outline=GOLD, width=3)
-
-    qr_panel = (236, 386, 844, 976)
-    _rounded_rectangle(draw, qr_panel, 28, fill=WHITE)
-
-    qr_image = _make_qr(pass_id)
-    qr_image = qr_image.resize((470, 470), Image.Resampling.NEAREST).convert("RGBA")
-    image.alpha_composite(qr_image, (305, 448))
-
-    _paste_contained(image, ASSET_DIR / "ananta_logo.png", (332, 1062, 420, 1148))
-    _paste_contained(image, ASSET_DIR / "appbar_rangaksh.png", (420, 1044, 748, 1164))
-
-    return image.convert("RGB")
+  <rect x="208" y="364" width="664" height="634" rx="28" fill="{MAROON}" stroke="{GOLD}" stroke-width="3"/>
+  <rect x="236" y="386" width="608" height="590" rx="28" fill="{WHITE}"/>
+  <g fill="{BLACK}">
+    {qr_rects}
+  </g>
+  <image href="{footer_src}" x="340" y="1058" width="400" height="102" preserveAspectRatio="xMidYMid meet"/>
+</svg>
+"""
 
 
 class handler(BaseHTTPRequestHandler):
@@ -152,12 +119,10 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(b"Missing ticket pass ID.")
             return
 
-        image = _make_ticket(pass_id)
-        buffer = BytesIO()
-        image.save(buffer, format="PNG")
+        ticket_svg = _make_ticket_svg(pass_id).encode("utf-8")
 
         self.send_response(200)
-        self.send_header("Content-Type", "image/png")
+        self.send_header("Content-Type", "image/svg+xml; charset=utf-8")
         self.send_header("Cache-Control", "public, max-age=31536000, immutable")
         self.end_headers()
-        self.wfile.write(buffer.getvalue())
+        self.wfile.write(ticket_svg)
