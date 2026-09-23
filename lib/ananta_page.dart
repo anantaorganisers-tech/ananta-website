@@ -486,11 +486,6 @@ class _FoundersSection extends StatelessWidget {
     final scale = width >= 1100 ? 1.5 : 1.0;
     const founders = [
       _Founder(
-        imagePath: 'lib/assets/ananta_portf/adivisor_card.png',
-        biography:
-            'Behind every journey is someone who has silently become the base of it all, and for us, that is Dr. Rishipal Yogi.\nHe is the Founder and CEO of Faith in Theatre, and apart from being our guru, he has been the mentor who has made us acquainted with theatre and has taught us the craft and skills of it. All that learning that we have undergone throughout our journey of lessons, rehearsals, performances has made us who we are as artists.',
-      ),
-      _Founder(
         imagePath: 'lib/assets/ananta_portf/ceo_card.png',
         biography:
             'Chirag is the Chief Executive Officer of the Ananta Organisation.\nHe has been taking part in theatrical events for many years and has received 10+ awards for his contribution in theatre. He serves an important role in the success of Rangaksh and the future of Ananta.',
