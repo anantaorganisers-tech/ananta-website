@@ -10,7 +10,7 @@ import 'visitor_pass_submission.dart';
 
 enum PaydeskProduct {
   oneAct(code: 'one-act', heading: 'ONE ACT COMPETITION', amount: 800),
-  djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 150);
+  djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 200);
 
   const PaydeskProduct({
     required this.code,

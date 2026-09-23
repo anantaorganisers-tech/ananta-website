@@ -458,7 +458,7 @@ function validateVisitorPassPayload_(payload) {
     throw new Error('The ticket count does not match the generated passes.');
   }
 
-  if (![50, 150, 200].includes(amount / ticketCount)) {
+  if (![80, 200, 280].includes(amount / ticketCount)) {
     throw new Error('Invalid visitor pass amount.');
   }
 }

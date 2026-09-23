@@ -1085,7 +1085,7 @@ class CelebrationSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   _TicketCtaButton(
-                    label: 'BOOK YOUR TICKETS NOW @ ₹50',
+                    label: 'BOOK YOUR TICKETS NOW @ ₹80',
                     onTap: () => _openTicketPaydesk(context),
                   ),
                 ],
@@ -1728,7 +1728,7 @@ class _DjGarbaGlassPanel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '₹150 per person',
+          '₹200 per person',
           style: GoogleFonts.montserrat(
             color: SiteColors.cream,
             fontSize: mobile ? 15 : 19,
@@ -1826,7 +1826,7 @@ class _DjGarbaPassButton extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Secure your pass now at ₹150!',
+                    'Secure your pass now at ₹200!',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.montserrat(
@@ -1878,9 +1878,12 @@ class _TicketCtaButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 768;
+    final buttonWidth = mobile
+        ? (MediaQuery.sizeOf(context).width - 80).clamp(280.0, 330.0).toDouble()
+        : 305.0;
     return HoverLift(
       child: SizedBox(
-        width: mobile ? 230 : 305,
+        width: buttonWidth,
         height: mobile ? 46 : 56,
         child: OutlinedButton(
           onPressed: onTap,
@@ -1900,7 +1903,10 @@ class _TicketCtaButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Flexible(
-                child: Text(label, maxLines: 1, overflow: TextOverflow.fade),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label, maxLines: 1),
+                ),
               ),
               SizedBox(width: mobile ? 10 : 14),
               Icon(Icons.north_east_rounded, size: mobile ? 20 : 25),
@@ -1935,7 +1941,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
     return count == null || count < 1 ? 1 : count;
   }
 
-  int get _packageSubtotal => (_audienceEntry ? 50 : 0) + (_djGarba ? 150 : 0);
+  int get _packageSubtotal => (_audienceEntry ? 80 : 0) + (_djGarba ? 200 : 0);
   int get _subtotal => _packageSubtotal * _ticketCountValue;
 
   String get _packageName {
@@ -2141,7 +2147,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
                       const SizedBox(height: 16),
                       _TicketPackageTile(
                         label: 'COMPETITION AUDIENCE ENTRY',
-                        price: 50,
+                        price: 80,
                         selected: _audienceEntry,
                         onTap: () {
                           setState(() => _audienceEntry = !_audienceEntry);
@@ -2150,7 +2156,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
                       const SizedBox(height: 14),
                       _TicketPackageTile(
                         label: 'DJ AND GARBA NIGHT',
-                        price: 150,
+                        price: 200,
                         selected: _djGarba,
                         onTap: () {
                           setState(() => _djGarba = !_djGarba);
