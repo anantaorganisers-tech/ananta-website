@@ -710,7 +710,7 @@ class _RangakshEventHeroImage extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     color: _AnantaColors.hero,
                     child: Text(
-                      'Venue- Vedanta Farms, Bhiwadi',
+                      'Venue- Vedanta Farms',
                       maxLines: 1,
                       style: GoogleFonts.montserrat(
                         color: _AnantaColors.cream,
