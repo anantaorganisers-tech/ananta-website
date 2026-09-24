@@ -1943,7 +1943,11 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
     return count == null || count < 1 ? 1 : count;
   }
 
-  int get _packageSubtotal => (_audienceEntry ? 80 : 0) + (_djGarba ? 200 : 0);
+  bool get _djGarbaBulkDiscountApplies =>
+      _djGarba && !_audienceEntry && _ticketCountValue >= 5;
+  int get _djGarbaPrice => _djGarbaBulkDiscountApplies ? 150 : 200;
+  int get _packageSubtotal =>
+      (_audienceEntry ? 80 : 0) + (_djGarba ? _djGarbaPrice : 0);
   int get _subtotal => _packageSubtotal * _ticketCountValue;
 
   String get _packageName {
@@ -1992,6 +1996,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
         packageName: _packageName,
         amount: _subtotal,
         ticketCount: _ticketCountValue,
+        massBookingDiscountApplied: _djGarbaBulkDiscountApplies,
       ),
     );
   }
@@ -2158,7 +2163,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
                       const SizedBox(height: 14),
                       _TicketPackageTile(
                         label: 'DJ AND GARBA NIGHT',
-                        price: 200,
+                        price: _djGarbaPrice,
                         selected: _djGarba,
                         onTap: () {
                           setState(() => _djGarba = !_djGarba);
@@ -2180,6 +2185,10 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
                               : 'Enter a ticket count between 1 and 20';
                         },
                       ),
+                      if (_djGarbaBulkDiscountApplies) ...[
+                        const SizedBox(height: 14),
+                        _MassBookingDiscountNotice(mobile: mobile),
+                      ],
                       SizedBox(height: mobile ? 26 : 34),
                       Text(
                         'Subtotal: ₹$_subtotal',
@@ -2374,6 +2383,35 @@ class _TicketPackageTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MassBookingDiscountNotice extends StatelessWidget {
+  const _MassBookingDiscountNotice({required this.mobile});
+
+  final bool mobile;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.symmetric(
+      horizontal: mobile ? 12 : 16,
+      vertical: mobile ? 10 : 12,
+    ),
+    decoration: BoxDecoration(
+      color: SiteColors.gold.withValues(alpha: .14),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: SiteColors.gold.withValues(alpha: .82)),
+    ),
+    child: Text(
+      'Mass Booking Discount applied! Tickets cost ₹150 per person',
+      textAlign: TextAlign.center,
+      style: GoogleFonts.montserrat(
+        color: SiteColors.cream,
+        fontSize: mobile ? 12 : 14,
+        fontWeight: FontWeight.w700,
+        height: 1.28,
+      ),
+    ),
+  );
 }
 
 class SponsorVisibilitySection extends StatelessWidget {

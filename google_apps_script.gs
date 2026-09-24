@@ -9,6 +9,8 @@ const MAX_BROCHURE_BYTES = 10 * 1024 * 1024;
 const MAX_QR_IMAGE_BYTES = 2 * 1024 * 1024;
 const VISITOR_AUDIENCE_PRICE = 80;
 const VISITOR_DJ_GARBA_PRICE = 200;
+const VISITOR_DJ_GARBA_BULK_PRICE = 150;
+const VISITOR_DJ_GARBA_BULK_MIN_TICKETS = 5;
 
 const APPLICATION_HEADERS = [
   'Submitted At',
@@ -479,16 +481,20 @@ function validateVisitorPassPayload_(payload) {
 
 function expectedVisitorPassAmount_(packageName, ticketCount) {
   const normalizedPackage = String(packageName || '').toUpperCase();
+  const hasCompetition = normalizedPackage.indexOf('COMPETITION') !== -1;
+  const hasDjGarba =
+    normalizedPackage.indexOf('DJ') !== -1 ||
+    normalizedPackage.indexOf('GARBA') !== -1;
   let perTicketAmount = 0;
 
-  if (normalizedPackage.indexOf('COMPETITION') !== -1) {
+  if (hasCompetition) {
     perTicketAmount += VISITOR_AUDIENCE_PRICE;
   }
-  if (
-    normalizedPackage.indexOf('DJ') !== -1 ||
-    normalizedPackage.indexOf('GARBA') !== -1
-  ) {
-    perTicketAmount += VISITOR_DJ_GARBA_PRICE;
+  if (hasDjGarba) {
+    perTicketAmount +=
+      !hasCompetition && ticketCount >= VISITOR_DJ_GARBA_BULK_MIN_TICKETS
+        ? VISITOR_DJ_GARBA_BULK_PRICE
+        : VISITOR_DJ_GARBA_PRICE;
   }
   if (perTicketAmount <= 0) {
     throw new Error('Invalid visitor pass package.');

@@ -12,6 +12,7 @@ class VisitorPassRegistrant {
     required this.packageName,
     required this.amount,
     required this.ticketCount,
+    this.massBookingDiscountApplied = false,
   });
 
   final String name;
@@ -20,6 +21,7 @@ class VisitorPassRegistrant {
   final String packageName;
   final int amount;
   final int ticketCount;
+  final bool massBookingDiscountApplied;
 }
 
 class VisitorPass {

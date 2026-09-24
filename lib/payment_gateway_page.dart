@@ -61,6 +61,9 @@ class _PaydeskPageState extends State<PaydeskPage> {
     return '${visitor.packageName} • ${visitor.ticketCount} ticket${visitor.ticketCount == 1 ? '' : 's'}';
   }
 
+  bool get _massBookingDiscountApplied =>
+      widget.visitor?.massBookingDiscountApplied ?? false;
+
   @override
   void dispose() {
     _upiId.dispose();
@@ -349,6 +352,10 @@ class _PaydeskPageState extends State<PaydeskPage> {
                               ),
                             ),
                           ],
+                          if (_massBookingDiscountApplied) ...[
+                            SizedBox(height: 12 * scale),
+                            _MassBookingDiscountNotice(scale: scale),
+                          ],
                           SizedBox(height: (mobile ? 44 : 58) * scale),
                           _QrPanel(amount: _payableAmount, scale: scale),
                           SizedBox(height: 34 * scale),
@@ -590,6 +597,32 @@ class _PaymentFooter extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MassBookingDiscountNotice extends StatelessWidget {
+  const _MassBookingDiscountNotice({required this.scale});
+
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 10 * scale),
+    decoration: BoxDecoration(
+      color: _PaymentColors.gold.withValues(alpha: .14),
+      borderRadius: BorderRadius.circular(10 * scale),
+      border: Border.all(color: _PaymentColors.gold.withValues(alpha: .82)),
+    ),
+    child: Text(
+      'Mass Booking Discount applied! Tickets cost ₹150 per person',
+      textAlign: TextAlign.center,
+      style: GoogleFonts.montserrat(
+        color: _PaymentColors.cream,
+        fontSize: 12 * scale,
+        fontWeight: FontWeight.w700,
+        height: 1.28,
+      ),
+    ),
+  );
 }
 
 class _PaymentColors {
