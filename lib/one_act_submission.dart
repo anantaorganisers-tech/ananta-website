@@ -1,43 +1,39 @@
 import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:http/http.dart' as http;
 
 class OneActRegistration {
   const OneActRegistration({
     required this.directorName,
     required this.category,
+    required this.amount,
     required this.school,
     required this.contactNumber,
     required this.emailAddress,
     required this.state,
+    required this.performanceBrief,
     required this.pastEvents,
     required this.teamMembers,
     required this.referralName,
-    required this.brochureName,
-    required this.brochureMimeType,
-    required this.brochureBytes,
   });
 
   final String directorName;
   final String category;
+  final int amount;
   final String school;
   final String contactNumber;
   final String emailAddress;
   final String state;
+  final String performanceBrief;
   final String pastEvents;
   final String teamMembers;
   final String referralName;
-  final String brochureName;
-  final String brochureMimeType;
-  final Uint8List brochureBytes;
 }
 
 class OneActSubmissionService {
   OneActSubmissionService._();
 
   static const _defaultGoogleAppsScriptUrl =
-      'https://script.google.com/macros/s/AKfycbxY0HUQzxupsoLsc6c-6MFHD16H13JroN6Ng1Riu87EYRzD75nlL1oG2bpWaCPLKa2d/exec';
+      'https://script.google.com/macros/s/AKfycbySNWck4nrWOCZEjvROZwkxvmnYwPTk86FvoOTPFuVGlZH9ToqkENPq3eD50EMeeoHR/exec';
   static const googleAppsScriptUrl = String.fromEnvironment(
     'GOOGLE_APPS_SCRIPT_URL',
     defaultValue: _defaultGoogleAppsScriptUrl,
@@ -55,16 +51,15 @@ class OneActSubmissionService {
         'submittedAt': DateTime.now().toIso8601String(),
         'directorName': registration.directorName,
         'category': registration.category,
+        'amount': registration.amount.toString(),
         'school': registration.school,
         'contactNumber': registration.contactNumber,
         'emailAddress': registration.emailAddress,
         'state': registration.state,
+        'performanceBrief': registration.performanceBrief,
         'pastEvents': registration.pastEvents,
         'teamMembers': registration.teamMembers,
         'referralName': registration.referralName,
-        'brochureName': registration.brochureName,
-        'brochureMimeType': registration.brochureMimeType,
-        'brochureBase64': base64Encode(registration.brochureBytes),
         'upiId': upiId,
         'transactionId': transactionId,
       },

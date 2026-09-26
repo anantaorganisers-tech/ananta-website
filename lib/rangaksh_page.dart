@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
+import 'rangaksh_footer.dart';
 import 'visitor_pass_submission.dart';
 import 'web_navigation.dart';
 
@@ -359,7 +360,7 @@ class _MobileHeroContent extends StatelessWidget {
                   const SizedBox(width: 10),
                   _CompactHeroButton(
                     label: 'Join As Participant',
-                    onTap: () => openRouteInNewTab('/participant'),
+                    onTap: () => openRouteInNewTab('/talent-hunt-form'),
                   ),
                 ],
               ),
@@ -426,23 +427,22 @@ class _MobileHeroLocationButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 45,
-      child: OutlinedButton.icon(
+      child: OutlinedButton(
         onPressed: onTap,
-        icon: const Icon(Icons.location_on_outlined, size: 21),
-        label: Text(
-          'VIEW LOCATION ON MAPS',
-          style: GoogleFonts.montserrat(
-            fontSize: 14.25,
-            fontWeight: FontWeight.w700,
-            letterSpacing: .52,
-          ),
-        ),
         style: OutlinedButton.styleFrom(
           foregroundColor: SiteColors.cream,
           side: BorderSide(color: SiteColors.cream.withValues(alpha: .58)),
           padding: const EdgeInsets.symmetric(horizontal: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          'VIEW LOCATION ON MAPS',
+          style: GoogleFonts.montserrat(
+            fontSize: 14.25,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .52,
           ),
         ),
       ),
@@ -499,7 +499,7 @@ class _HeroContent extends StatelessWidget {
                       children: [
                         _HeroButton(
                           label: 'JOIN AS PARTICIPANT',
-                          onTap: () => openRouteInNewTab('/participant'),
+                          onTap: () => openRouteInNewTab('/talent-hunt-form'),
                         ),
                         const SizedBox(height: 14),
                         _HeroButton(
@@ -530,7 +530,7 @@ class _HeroContent extends StatelessWidget {
                       children: [
                         _HeroButton(
                           label: 'JOIN AS PARTICIPANT',
-                          onTap: () => openRouteInNewTab('/participant'),
+                          onTap: () => openRouteInNewTab('/talent-hunt-form'),
                         ),
                         _HeroButton(
                           label: 'JOIN AS SECRETARIAT',
@@ -577,7 +577,7 @@ class _DesktopHeroArtwork extends StatelessWidget {
                 filterQuality: FilterQuality.high,
               ),
               Positioned(
-                left: 1088 * scale,
+                left: 1130 * scale,
                 top: 306 * scale,
                 child: _HeroLocationButton(
                   scale: scale,
@@ -603,23 +603,22 @@ class _HeroLocationButton extends StatelessWidget {
     return HoverLift(
       child: SizedBox(
         height: 54 * scale,
-        child: OutlinedButton.icon(
+        child: OutlinedButton(
           onPressed: onTap,
-          icon: Icon(Icons.location_on_outlined, size: 25.5 * scale),
-          label: Text(
-            'VIEW LOCATION ON MAPS',
-            style: GoogleFonts.montserrat(
-              fontSize: 18 * scale,
-              fontWeight: FontWeight.w600,
-              letterSpacing: .75 * scale,
-            ),
-          ),
           style: OutlinedButton.styleFrom(
             foregroundColor: SiteColors.cream,
             side: BorderSide(color: SiteColors.cream.withValues(alpha: .58)),
             padding: EdgeInsets.symmetric(horizontal: 21 * scale),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12 * scale),
+            ),
+          ),
+          child: Text(
+            'VIEW LOCATION ON MAPS',
+            style: GoogleFonts.montserrat(
+              fontSize: 18 * scale,
+              fontWeight: FontWeight.w600,
+              letterSpacing: .75 * scale,
             ),
           ),
         ),
@@ -2519,8 +2518,8 @@ class JoinUsSection extends StatelessWidget {
               children: [
                 _JoinUsCard(
                   title: 'Join As Participant',
-                  subtitle: 'Be a part of the One-Act Play Competition',
-                  onTap: () => openRouteInNewTab('/participant'),
+                  subtitle: 'Be a part of the Talent Hunt Contest',
+                  onTap: () => openRouteInNewTab('/talent-hunt-form'),
                 ),
                 const SizedBox(height: 14),
                 _JoinUsCard(
@@ -2694,22 +2693,7 @@ class FooterSection extends StatelessWidget {
   const FooterSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 768;
-    return Container(
-      // Matches the baked-in edge color of footer.png to avoid a visible seam.
-      color: const Color(0xFF410F19),
-      width: double.infinity,
-      height: mobile ? 92 : 240,
-      alignment: Alignment.center,
-      child: Image.asset(
-        'lib/assets/footer.png',
-        fit: BoxFit.contain,
-        width: mobile ? double.infinity : 1320,
-        filterQuality: FilterQuality.high,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const RangakshFooter();
 }
 
 class _SectionFrame extends StatelessWidget {

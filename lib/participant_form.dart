@@ -1,10 +1,10 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
 import 'one_act_submission.dart';
+import 'rangaksh_footer.dart';
 
 class ParticipantForm extends StatefulWidget {
   const ParticipantForm({super.key});
@@ -15,27 +15,25 @@ class ParticipantForm extends StatefulWidget {
 class _ParticipantFormState extends State<ParticipantForm> {
   final _formKey = GlobalKey<FormState>();
   final _directorName = TextEditingController();
+  final _performanceBrief = TextEditingController();
   final _school = TextEditingController();
   final _contact = TextEditingController();
   final _email = TextEditingController();
   final _state = TextEditingController();
   final _pastEvents = TextEditingController();
-  final _members = TextEditingController();
   final _referral = TextEditingController();
   String? _category;
-  PlatformFile? _brochure;
-  bool _showBrochureError = false;
 
   @override
   void dispose() {
     for (final controller in [
       _directorName,
+      _performanceBrief,
       _school,
       _contact,
       _email,
       _state,
       _pastEvents,
-      _members,
       _referral,
     ]) {
       controller.dispose();
@@ -43,46 +41,23 @@ class _ParticipantFormState extends State<ParticipantForm> {
     super.dispose();
   }
 
-  Future<void> _pickBrochure() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
-      withData: true,
-    );
-    if (!mounted || result == null) return;
-
-    setState(() {
-      _brochure = result.files.single;
-      _showBrochureError = false;
-    });
-  }
-
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final brochure = _brochure;
-    if (brochure == null || brochure.bytes == null) {
-      setState(() => _showBrochureError = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please upload your play brochure as a PDF.'),
-        ),
-      );
-      return;
-    }
+    final category = _category;
+    if (category == null) return;
 
     final registration = OneActRegistration(
       directorName: _directorName.text.trim(),
-      category: _category ?? '',
+      category: category,
+      amount: _TalentHuntCategory.amountFor(category),
       school: _school.text.trim(),
       contactNumber: _contact.text.trim(),
       emailAddress: _email.text.trim(),
       state: _state.text.trim(),
+      performanceBrief: _performanceBrief.text.trim(),
       pastEvents: _pastEvents.text.trim(),
-      teamMembers: _members.text.trim(),
+      teamMembers: category,
       referralName: _referral.text.trim(),
-      brochureName: brochure.name,
-      brochureMimeType: 'application/pdf',
-      brochureBytes: brochure.bytes!,
     );
 
     Navigator.of(
@@ -115,7 +90,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'ONE ACT COMPETITION',
+                          'TALENT HUNT',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             color: _ParticipantColors.cream,
@@ -126,7 +101,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
                         ),
                         SizedBox(height: 10 * scale),
                         Text(
-                          'SIGN UP FORM',
+                          'APPLICATION FORM',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             color: _ParticipantColors.cream.withValues(
@@ -140,7 +115,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
                           alignment: Alignment.center,
                           child: OutlinedButton.icon(
                             onPressed: () =>
-                                Navigator.of(context).pushNamed('/one-act'),
+                                Navigator.of(context).pushNamed('/talent-hunt'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: _ParticipantColors.cream,
                               side: const BorderSide(color: Color(0xFF9A7177)),
@@ -153,7 +128,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
                               size: 18 * scale,
                             ),
                             label: Text(
-                              'Click Here to View Details of the One Act Competition',
+                              'Click Here to View Details of the Talent Hunt Competition',
                               style: GoogleFonts.montserrat(
                                 fontSize: (mobile ? 10 : 12) * scale,
                                 fontWeight: FontWeight.w600,
@@ -163,18 +138,32 @@ class _ParticipantFormState extends State<ParticipantForm> {
                         ),
                         SizedBox(height: (mobile ? 58 : 72) * scale),
                         _Field(
-                          label: 'Team Director Name',
+                          label: 'Individual’s Name / Team Name',
                           controller: _directorName,
                         ),
                         SizedBox(height: 28 * scale),
-                        _ResponsiveFieldRow(
-                          left: _CategoryField(
-                            value: _category,
-                            onChanged: (value) =>
-                                setState(() => _category = value),
-                          ),
-                          right: _Field(label: 'School', controller: _school),
+                        _Field(
+                          label: 'Performance Brief',
+                          helper:
+                              'Give a short explanation of what you’d like to perform. All art forms are welcome.',
+                          controller: _performanceBrief,
+                          maxLines: 6,
                         ),
+                        SizedBox(height: 28 * scale),
+                        _Field(
+                          label: 'Previous Experiences (if any)',
+                          controller: _pastEvents,
+                          maxLines: 3,
+                          validator: (_) => null,
+                        ),
+                        SizedBox(height: 28 * scale),
+                        _CategoryField(
+                          value: _category,
+                          onChanged: (value) =>
+                              setState(() => _category = value),
+                        ),
+                        SizedBox(height: 28 * scale),
+                        _Field(label: 'School', controller: _school),
                         SizedBox(height: 28 * scale),
                         _ResponsiveFieldRow(
                           left: _Field(
@@ -204,40 +193,6 @@ class _ParticipantFormState extends State<ParticipantForm> {
                         ),
                         SizedBox(height: 28 * scale),
                         _Field(label: 'State', controller: _state),
-                        SizedBox(height: 28 * scale),
-                        _Field(
-                          label: 'Past Events Attended (if any)',
-                          controller: _pastEvents,
-                          maxLines: 3,
-                          validator: (_) => null,
-                        ),
-                        SizedBox(height: 28 * scale),
-                        _BrochureUploadField(
-                          brochure: _brochure,
-                          showError: _showBrochureError,
-                          onPick: _pickBrochure,
-                          onRemove: _brochure == null
-                              ? null
-                              : () => setState(() {
-                                  _brochure = null;
-                                  _showBrochureError = false;
-                                }),
-                        ),
-                        SizedBox(height: 28 * scale),
-                        _Field(
-                          label: 'Number of team members',
-                          controller: _members,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          validator: (value) {
-                            final count = int.tryParse(value ?? '');
-                            return count != null && count >= 6 && count <= 10
-                                ? null
-                                : 'Enter a number between 6 and 10';
-                          },
-                        ),
                         SizedBox(height: 28 * scale),
                         _Field(
                           label: 'Referral name from Team Rangaksh',
@@ -279,7 +234,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
                 ),
               ),
             ),
-            const _ParticipantFooter(),
+            const RangakshFooter(),
           ],
         ),
       ),
@@ -287,143 +242,11 @@ class _ParticipantFormState extends State<ParticipantForm> {
   }
 }
 
-class _BrochureUploadField extends StatelessWidget {
-  const _BrochureUploadField({
-    required this.brochure,
-    required this.showError,
-    required this.onPick,
-    required this.onRemove,
-  });
-
-  final PlatformFile? brochure;
-  final bool showError;
-  final VoidCallback onPick;
-  final VoidCallback? onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = _formScale(context);
-    final selected = brochure != null;
-    final borderColor = showError
-        ? const Color(0xFFE0A8A8)
-        : selected
-        ? _ParticipantColors.gold
-        : const Color(0xFF8D4B55);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Brochure of your Play (PDF)',
-          style: GoogleFonts.montserrat(
-            color: _ParticipantColors.cream,
-            fontSize: 16 * scale,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        SizedBox(height: 12 * scale),
-        OutlinedButton(
-          onPressed: onPick,
-          style: OutlinedButton.styleFrom(
-            alignment: Alignment.centerLeft,
-            minimumSize: Size.fromHeight(112 * scale),
-            padding: EdgeInsets.symmetric(
-              horizontal: 18 * scale,
-              vertical: 14 * scale,
-            ),
-            backgroundColor: _ParticipantColors.field,
-            foregroundColor: _ParticipantColors.cream,
-            side: BorderSide(color: borderColor),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                selected
-                    ? Icons.picture_as_pdf_rounded
-                    : Icons.upload_file_rounded,
-                size: 30 * scale,
-                color: selected
-                    ? _ParticipantColors.gold
-                    : _ParticipantColors.cream,
-              ),
-              SizedBox(width: 14 * scale),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      selected ? brochure!.name : 'Choose your PDF brochure',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.montserrat(
-                        fontSize: 14 * scale,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 5 * scale),
-                    Text(
-                      selected
-                          ? '${_formatFileSize(brochure!.size)} ready for submission'
-                          : 'PDF files only',
-                      style: GoogleFonts.montserrat(
-                        color: _ParticipantColors.cream.withValues(alpha: .72),
-                        fontSize: 12 * scale,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.north_east_rounded, size: 20 * scale),
-            ],
-          ),
-        ),
-        if (selected)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: onRemove,
-              icon: Icon(Icons.close_rounded, size: 16 * scale),
-              label: Text(
-                'Remove file',
-                style: GoogleFonts.montserrat(fontSize: 12 * scale),
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: _ParticipantColors.cream.withValues(
-                  alpha: .82,
-                ),
-              ),
-            ),
-          ),
-        if (showError)
-          Padding(
-            padding: EdgeInsets.only(top: 8 * scale, left: 12 * scale),
-            child: Text(
-              'Please upload your play brochure as a PDF.',
-              style: GoogleFonts.montserrat(
-                color: Colors.white,
-                fontSize: 12 * scale,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-String _formatFileSize(int bytes) {
-  if (bytes < 1024) return '$bytes B';
-  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-}
-
 class _Field extends StatelessWidget {
   const _Field({
     required this.label,
     required this.controller,
+    this.helper,
     this.keyboardType,
     this.inputFormatters,
     this.validator,
@@ -431,6 +254,7 @@ class _Field extends StatelessWidget {
   });
   final String label;
   final TextEditingController controller;
+  final String? helper;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
@@ -449,6 +273,17 @@ class _Field extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
+        if (helper != null) ...[
+          SizedBox(height: 4 * scale),
+          Text(
+            helper!,
+            style: GoogleFonts.montserrat(
+              color: _ParticipantColors.cream.withValues(alpha: .58),
+              fontSize: 11 * scale,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
         SizedBox(height: 12 * scale),
         TextFormField(
           controller: controller,
@@ -510,7 +345,7 @@ class _CategoryField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Category',
+          'Number of team members',
           style: GoogleFonts.montserrat(
             color: _ParticipantColors.cream,
             fontSize: 16 * scale,
@@ -520,6 +355,7 @@ class _CategoryField extends StatelessWidget {
         SizedBox(height: 12 * scale),
         DropdownButtonFormField<String>(
           initialValue: value,
+          isExpanded: true,
           dropdownColor: _ParticipantColors.field,
           style: GoogleFonts.montserrat(
             color: _ParticipantColors.cream,
@@ -545,19 +381,71 @@ class _CategoryField extends StatelessWidget {
               borderSide: const BorderSide(color: _ParticipantColors.gold),
             ),
           ),
-          items:
-              const ['Class 6 - Class 8', 'Class 9 - Class 12', 'Undergraduate']
-                  .map(
-                    (item) => DropdownMenuItem(value: item, child: Text(item)),
-                  )
-                  .toList(),
+          items: _TalentHuntCategory.options
+              .map(
+                (item) => DropdownMenuItem(
+                  value: item.label,
+                  child: Text(
+                    item.menuLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
+          selectedItemBuilder: (context) => _TalentHuntCategory.options
+              .map(
+                (item) => Text(
+                  item.menuLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+              .toList(),
           onChanged: onChanged,
           validator: (value) =>
-              value == null ? 'Please select a category' : null,
+              value == null ? 'Please select team size' : null,
         ),
       ],
     );
   }
+}
+
+class _TalentHuntCategory {
+  const _TalentHuntCategory({
+    required this.label,
+    required this.menuLabel,
+    required this.amount,
+  });
+
+  final String label;
+  final String menuLabel;
+  final int amount;
+
+  static const options = [
+    _TalentHuntCategory(
+      label: 'Solo/Duet Performance',
+      menuLabel: 'Solo/Duet Performance - ₹250',
+      amount: 250,
+    ),
+    _TalentHuntCategory(
+      label: '3-5 Participant Team Performance',
+      menuLabel: '3-5 Participant Team Performance - ₹400',
+      amount: 400,
+    ),
+    _TalentHuntCategory(
+      label: '5+ Participant Team Performance',
+      menuLabel: '5+ Participant Team Performance - ₹800',
+      amount: 800,
+    ),
+  ];
+
+  static int amountFor(String label) => options
+      .firstWhere(
+        (option) => option.label == label,
+        orElse: () => throw ArgumentError('Unknown Talent Hunt category'),
+      )
+      .amount;
 }
 
 class _ResponsiveFieldRow extends StatelessWidget {
@@ -577,24 +465,6 @@ class _ResponsiveFieldRow extends StatelessWidget {
             ],
           ),
   );
-}
-
-class _ParticipantFooter extends StatelessWidget {
-  const _ParticipantFooter();
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 700;
-    return Container(
-      color: const Color(0xFF410F19),
-      height: mobile ? 92 : 145,
-      alignment: Alignment.center,
-      child: Image.asset(
-        'lib/assets/footer.png',
-        width: mobile ? double.infinity : 820,
-        fit: BoxFit.contain,
-      ),
-    );
-  }
 }
 
 class _ParticipantColors {

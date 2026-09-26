@@ -1,5 +1,5 @@
 const APPLICATIONS_SHEET_NAME = 'Applications';
-const ONE_ACT_SHEET_NAME = 'OneAct';
+const ONE_ACT_SHEET_NAME = 'TalentHunt';
 const ONE_ACT_BROCHURE_FOLDER_NAME = 'Rangaksh One Act Brochures';
 const VISITOR_PASS_SHEET_NAME = 'VisitorPass';
 const VISITOR_PASS_QR_FOLDER_NAME = 'Rangaksh Visitor Pass QR Codes';
@@ -29,16 +29,17 @@ const APPLICATION_HEADERS = [
 
 const ONE_ACT_HEADERS = [
   'Submitted At',
-  'Team Director Name',
-  'Category',
+  'Individual/Team Name',
+  'Team Size Category',
+  'Performance Brief',
+  'Previous Experiences',
+  'Number of Team Members',
   'School',
   'Contact Number',
   'E-Mail Address',
   'State',
-  'Past Events Attended',
-  'Number of Team Members',
   'Referral Name from Team Rangaksh',
-  'Brochure (PDF)',
+  'Amount (INR)',
   'UPI ID',
   'Transaction ID',
   'Payment Status',
@@ -188,24 +189,24 @@ function saveOneActPayment_(payload) {
 
   const sheet = getOrCreateSheet_(ONE_ACT_SHEET_NAME);
   ensureHeaders_(sheet, ONE_ACT_HEADERS);
-  if (findMatchingRow_(sheet, 13, payload.transactionId)) {
+  if (findMatchingRow_(sheet, 14, payload.transactionId)) {
     throw new Error('This transaction ID has already been recorded.');
   }
 
-  const brochureUrl = saveBrochure_(payload);
   const recordedAt = new Date().toISOString();
   sheet.appendRow([
     payload.submittedAt || recordedAt,
     payload.directorName || '',
     payload.category || '',
+    payload.performanceBrief || '',
+    payload.pastEvents || '',
+    payload.teamMembers || '',
     payload.school || '',
     payload.contactNumber || '',
     payload.emailAddress || '',
     payload.state || '',
-    payload.pastEvents || '',
-    payload.teamMembers || '',
     payload.referralName || '',
-    '',
+    Number(payload.amount),
     payload.upiId || '',
     payload.transactionId || '',
     'Payment details submitted',
@@ -213,14 +214,7 @@ function saveOneActPayment_(payload) {
     'Pending',
   ]);
 
-  const row = sheet.getLastRow();
-  sheet
-    .getRange(row, 11)
-    .setFormula(
-      '=HYPERLINK("' + escapeFormulaString_(brochureUrl) + '", "View PDF")',
-    );
-
-  return jsonResponse_({success: true, row: row});
+  return jsonResponse_({success: true, row: sheet.getLastRow()});
 }
 
 function saveVisitorPassPayment_(payload) {
@@ -418,13 +412,13 @@ function validateOneActPayload_(payload) {
   [
     'directorName',
     'category',
+    'amount',
     'school',
     'contactNumber',
     'emailAddress',
     'state',
+    'performanceBrief',
     'teamMembers',
-    'brochureName',
-    'brochureBase64',
     'upiId',
     'transactionId',
   ].forEach(function (field) {
@@ -432,6 +426,35 @@ function validateOneActPayload_(payload) {
       throw new Error('Missing required field: ' + field);
     }
   });
+
+  const expectedAmount = expectedTalentHuntAmount_(payload.category);
+  const amount = Number(payload.amount);
+  if (amount !== expectedAmount) {
+    throw new Error(
+      'Invalid Talent Hunt amount. Received ₹' +
+        amount +
+        ', expected ₹' +
+        expectedAmount +
+        '.',
+    );
+  }
+}
+
+function expectedTalentHuntAmount_(category) {
+  const normalizedCategory = String(category || '').toUpperCase();
+  if (
+    normalizedCategory.indexOf('SOLO') !== -1 ||
+    normalizedCategory.indexOf('DUET') !== -1
+  ) {
+    return 250;
+  }
+  if (normalizedCategory.indexOf('3-5') !== -1) {
+    return 400;
+  }
+  if (normalizedCategory.indexOf('5+') !== -1) {
+    return 800;
+  }
+  throw new Error('Invalid Talent Hunt category.');
 }
 
 function validateVisitorPassPayload_(payload) {

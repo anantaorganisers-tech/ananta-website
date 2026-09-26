@@ -6,10 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
 import 'one_act_submission.dart';
+import 'rangaksh_footer.dart';
 import 'visitor_pass_submission.dart';
 
 enum PaydeskProduct {
-  oneAct(code: 'one-act', heading: 'ONE ACT COMPETITION', amount: 800),
+  oneAct(code: 'one-act', heading: 'TALENT HUNT', amount: 800),
   djGarba(code: 'dj-garba', heading: 'DJ & GARBA NIGHT', amount: 200);
 
   const PaydeskProduct({
@@ -52,11 +53,19 @@ class _PaydeskPageState extends State<PaydeskPage> {
   bool _paymentRecorded = false;
   bool _exitConfirmed = false;
 
-  int get _payableAmount => widget.visitor?.amount ?? widget.product.amount;
+  int get _payableAmount =>
+      widget.visitor?.amount ??
+      widget.registration?.amount ??
+      widget.product.amount;
   String get _checkoutHeading =>
       widget.visitor == null ? widget.product.heading : 'AUDIENCE TICKET';
   String? get _checkoutPackageSummary {
     final visitor = widget.visitor;
+    final registration = widget.registration;
+    if (visitor == null && registration == null) return null;
+    if (registration != null) {
+      return '${registration.category} • ₹${registration.amount}';
+    }
     if (visitor == null) return null;
     return '${visitor.packageName} • ${visitor.ticketCount} ticket${visitor.ticketCount == 1 ? '' : 's'}';
   }
@@ -77,7 +86,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
         widget.registration == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please complete the One Act registration form first.'),
+          content: Text('Please complete the Talent Hunt form first.'),
         ),
       );
       return;
@@ -182,7 +191,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
         ),
       ),
       content: Text(
-        'Your One Act registration has been recorded and is pending approval.',
+        'Your Talent Hunt registration has been recorded and is pending approval.',
         style: GoogleFonts.montserrat(
           color: _PaymentColors.cream.withValues(alpha: .84),
         ),
@@ -427,7 +436,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
                   ),
                 ),
               ),
-              const _PaymentFooter(),
+              const RangakshFooter(),
             ],
           ),
         ),
@@ -575,26 +584,6 @@ class _PaymentField extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _PaymentFooter extends StatelessWidget {
-  const _PaymentFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 700;
-    return Container(
-      color: const Color(0xFF410F19),
-      height: mobile ? 92 : 145,
-      alignment: Alignment.center,
-      child: Image.asset(
-        'lib/assets/footer.png',
-        width: mobile ? double.infinity : 820,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-      ),
     );
   }
 }

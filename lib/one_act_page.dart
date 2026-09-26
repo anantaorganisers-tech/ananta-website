@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'rangaksh_footer.dart';
+
 class OneActPage extends StatelessWidget {
   const OneActPage({super.key});
 
@@ -14,11 +16,12 @@ class OneActPage extends StatelessWidget {
         child: Column(
           children: [
             _CompetitionContent(
-              onRegister: () => Navigator.of(context).pushNamed('/participant'),
+              onRegister: () =>
+                  Navigator.of(context).pushNamed('/talent-hunt-form'),
               onViewThemes: () =>
                   Navigator.of(context).pushNamed('/rangaksh/themes'),
             ),
-            const _CompetitionFooter(),
+            const RangakshFooter(),
           ],
         ),
       ),
@@ -204,7 +207,7 @@ class _CompetitionContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ONE ACT COMPETITION',
+                'TALENT HUNT CONTEST',
                 style: GoogleFonts.montserrat(
                   color: _CompetitionColors.cream,
                   fontSize: mobile ? 32 : 50,
@@ -214,7 +217,7 @@ class _CompetitionContent extends StatelessWidget {
               ),
               SizedBox(height: mobile ? 20 : 28),
               Text(
-                'Rangaksh invites theater teams to present their originality, creativity and storytelling through a one-act performance. Participants will have the opportunity to bring their stories to life on stage and showcase their talent in acting, direction and stagecraft.',
+                'Rangaksh invites the youth to present their originality, creativity and talent through a youth talent show. Participants will have the opportunity to bring their art style to life on stage and showcase their talent in theater, dance, music and a lot more.',
                 style: GoogleFonts.baloo2(
                   color: _CompetitionColors.cream,
                   fontSize: mobile ? 18 : 25,
@@ -237,22 +240,26 @@ class _CompetitionContent extends StatelessWidget {
               const _RulesGroup(
                 title: 'COMPETITION FORMAT:',
                 rules: [
-                  'The competition will be conducted as a One Act Play Competition.',
+                  'The competition will be conducted as an all talent competition.',
                   'Each participating team will present one original stage performance based on the given theme.',
                   'Teams may interpret the theme creatively while maintaining a clear connection to Navratri and/or Navras.',
                 ],
               ),
               const _RulesGroup(
                 title: 'PERFORMANCE DURATION:',
-                rules: ['Minimum: 30 minutes', 'Maximum: 35 minutes'],
+                rules: ['Minimum: 2-5 minutes', 'Maximum: 35 minutes'],
               ),
               const _RulesGroup(
                 title: 'TEAM SIZE:',
-                rules: ['Minimum: 3 participants', 'Maximum: 10 participants'],
+                rules: ['Minimum: 1 participant', 'Maximum: 10 participants'],
               ),
               const _RulesGroup(
                 title: 'REGISTRATION FEE:',
-                rules: ['₹800 per team'],
+                rules: [
+                  '₹250 for solo/duet performance',
+                  '₹400 for 3-5 participant team performance',
+                  '₹800 for 5+ participant team performance',
+                ],
               ),
               const _RulesGroup(
                 title: 'LANGUAGE:',
@@ -396,22 +403,6 @@ class _RulesGroup extends StatelessWidget {
       ),
     );
   }
-}
-
-class _CompetitionFooter extends StatelessWidget {
-  const _CompetitionFooter();
-  @override
-  Widget build(BuildContext context) => Container(
-    color: const Color(0xFF410F19),
-    height: MediaQuery.sizeOf(context).width < 700 ? 92 : 210,
-    alignment: Alignment.center,
-    child: Image.asset(
-      'lib/assets/footer.png',
-      fit: BoxFit.contain,
-      width: MediaQuery.sizeOf(context).width < 700 ? double.infinity : 1280,
-      filterQuality: FilterQuality.high,
-    ),
-  );
 }
 
 class _CompetitionColors {

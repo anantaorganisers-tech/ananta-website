@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'one_act_page.dart';
 import 'one_act_submission.dart';
+import 'rangaksh_footer.dart';
 import 'sec_form.dart';
 
 class SponsorshipForm extends StatefulWidget {
@@ -230,7 +231,7 @@ class _SponsorshipFormState extends State<SponsorshipForm> {
                 ),
               ),
             ),
-            const _SponsorFooter(),
+            const RangakshFooter(),
           ],
         ),
       ),
@@ -450,27 +451,6 @@ class _SponsorshipMatrixDialog extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SponsorFooter extends StatelessWidget {
-  const _SponsorFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 600;
-    return Container(
-      height: mobile ? 92 : 145,
-      width: double.infinity,
-      color: const Color(0xFF410F19),
-      alignment: Alignment.center,
-      child: Image.asset(
-        'lib/assets/footer.png',
-        width: mobile ? double.infinity : 820,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
       ),
     );
   }

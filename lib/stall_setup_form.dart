@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'one_act_page.dart';
 import 'one_act_submission.dart';
+import 'rangaksh_footer.dart';
 import 'sec_form.dart';
 
 class StallSetupForm extends StatefulWidget {
@@ -231,7 +232,7 @@ class _StallSetupFormState extends State<StallSetupForm> {
                 ),
               ),
             ),
-            const _StallFooter(),
+            const RangakshFooter(),
           ],
         ),
       ),
@@ -371,27 +372,6 @@ class _StallDropdownBlock extends StatelessWidget {
                 : null,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StallFooter extends StatelessWidget {
-  const _StallFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 600;
-    return Container(
-      height: mobile ? 92 : 145,
-      width: double.infinity,
-      color: const Color(0xFF410F19),
-      alignment: Alignment.center,
-      child: Image.asset(
-        'lib/assets/footer.png',
-        width: mobile ? double.infinity : 820,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
       ),
     );
   }
