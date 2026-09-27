@@ -425,8 +425,8 @@ class _TalentHuntCategory {
   static const options = [
     _TalentHuntCategory(
       label: 'Solo/Duet Performance',
-      menuLabel: 'Solo/Duet Performance - ₹250',
-      amount: 250,
+      menuLabel: 'Solo/Duet Performance - ₹200',
+      amount: 200,
     ),
     _TalentHuntCategory(
       label: '3-5 Participant Team Performance',

@@ -446,7 +446,7 @@ function expectedTalentHuntAmount_(category) {
     normalizedCategory.indexOf('SOLO') !== -1 ||
     normalizedCategory.indexOf('DUET') !== -1
   ) {
-    return 250;
+    return 200;
   }
   if (normalizedCategory.indexOf('3-5') !== -1) {
     return 400;

@@ -256,7 +256,7 @@ class _CompetitionContent extends StatelessWidget {
               const _RulesGroup(
                 title: 'REGISTRATION FEE:',
                 rules: [
-                  '₹250 for solo/duet performance',
+                  '₹200 for solo/duet performance',
                   '₹400 for 3-5 participant team performance',
                   '₹800 for 5+ participant team performance',
                 ],
