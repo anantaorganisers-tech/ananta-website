@@ -33,7 +33,7 @@ class OneActSubmissionService {
   OneActSubmissionService._();
 
   static const _defaultGoogleAppsScriptUrl =
-      'https://script.google.com/macros/s/AKfycbySNWck4nrWOCZEjvROZwkxvmnYwPTk86FvoOTPFuVGlZH9ToqkENPq3eD50EMeeoHR/exec';
+      'https://script.google.com/macros/s/AKfycbzxZeYgeOEFu_wzFnjxAPbXge8WwFkx1kiTNq9_4yQbOzX-Q2dqQOHH_FBzDb9AhC51/exec';
   static const googleAppsScriptUrl = String.fromEnvironment(
     'GOOGLE_APPS_SCRIPT_URL',
     defaultValue: _defaultGoogleAppsScriptUrl,
