@@ -47,6 +47,11 @@ class _ParticipantFormState extends State<ParticipantForm> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final category = _category;
     if (category == null) return;
+    final dateOfBirth = _parseDateOfBirth(_dateOfBirth.text.trim());
+    if (dateOfBirth == null || !_isTalentHuntAgeEligible(dateOfBirth)) {
+      await _showAgeRestrictionDialog();
+      return;
+    }
 
     final registration = OneActRegistration(
       directorName: _directorName.text.trim(),
@@ -67,6 +72,34 @@ class _ParticipantFormState extends State<ParticipantForm> {
       context,
     ).pushNamed('/paydesk?prod=one-act', arguments: registration);
   }
+
+  Future<void> _showAgeRestrictionDialog() => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _ParticipantColors.field,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: _ParticipantColors.gold),
+      ),
+      content: Text(
+        'Sorry, due to age restrcitions, you are not eligible for the Talent Hunt Contest',
+        style: GoogleFonts.montserrat(
+          color: _ParticipantColors.cream,
+          fontSize: 15,
+          height: 1.35,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            foregroundColor: _ParticipantColors.cream,
+          ),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
 
   Future<void> _pickDateOfBirth() async {
     final now = DateTime.now();
@@ -410,10 +443,17 @@ class _Field extends StatelessWidget {
 
 String? _validateDateOfBirth(String? value) {
   final raw = value?.trim() ?? '';
-  if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(raw)) {
+  final date = _parseDateOfBirth(raw);
+  if (date == null) {
     return 'Select your date of birth';
   }
+  return null;
+}
 
+DateTime? _parseDateOfBirth(String raw) {
+  if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(raw)) {
+    return null;
+  }
   final parts = raw.split('/');
   final day = int.parse(parts[0]);
   final month = int.parse(parts[1]);
@@ -421,9 +461,21 @@ String? _validateDateOfBirth(String? value) {
   final date = DateTime(year, month, day);
   final validDate = date.year == year && date.month == month && date.day == day;
   if (!validDate || date.isAfter(DateTime.now())) {
-    return 'Enter a valid date of birth';
+    return null;
   }
-  return null;
+  return date;
+}
+
+bool _isTalentHuntAgeEligible(DateTime dateOfBirth) {
+  final today = DateTime.now();
+  var age = today.year - dateOfBirth.year;
+  final birthdayThisYear = DateTime(
+    today.year,
+    dateOfBirth.month,
+    dateOfBirth.day,
+  );
+  if (today.isBefore(birthdayThisYear)) age--;
+  return age >= 13 && age <= 22;
 }
 
 class _CategoryField extends StatelessWidget {
