@@ -15,6 +15,7 @@ class ParticipantForm extends StatefulWidget {
 class _ParticipantFormState extends State<ParticipantForm> {
   final _formKey = GlobalKey<FormState>();
   final _directorName = TextEditingController();
+  final _dateOfBirth = TextEditingController();
   final _performanceBrief = TextEditingController();
   final _school = TextEditingController();
   final _contact = TextEditingController();
@@ -28,6 +29,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
   void dispose() {
     for (final controller in [
       _directorName,
+      _dateOfBirth,
       _performanceBrief,
       _school,
       _contact,
@@ -48,6 +50,7 @@ class _ParticipantFormState extends State<ParticipantForm> {
 
     final registration = OneActRegistration(
       directorName: _directorName.text.trim(),
+      dateOfBirth: _dateOfBirth.text.trim(),
       category: category,
       amount: _TalentHuntCategory.amountFor(category),
       school: _school.text.trim(),
@@ -63,6 +66,57 @@ class _ParticipantFormState extends State<ParticipantForm> {
     Navigator.of(
       context,
     ).pushNamed('/paydesk?prod=one-act', arguments: registration);
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime(now.year - 16, now.month, now.day),
+      firstDate: DateTime(1950),
+      lastDate: now,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: _ParticipantColors.gold,
+            onPrimary: Color(0xFF220C0F),
+            surface: _ParticipantColors.field,
+            onSurface: _ParticipantColors.cream,
+          ),
+          inputDecorationTheme: const InputDecorationTheme(
+            labelStyle: TextStyle(color: _ParticipantColors.cream),
+            floatingLabelStyle: TextStyle(color: _ParticipantColors.gold),
+            hintStyle: TextStyle(color: _ParticipantColors.cream),
+            counterStyle: TextStyle(color: _ParticipantColors.cream),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: _ParticipantColors.gold),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: _ParticipantColors.gold),
+            ),
+          ),
+          textSelectionTheme: const TextSelectionThemeData(
+            cursorColor: _ParticipantColors.cream,
+            selectionColor: Color(0x66FFF3DE),
+            selectionHandleColor: _ParticipantColors.gold,
+          ),
+          textTheme: Theme.of(context).textTheme.apply(
+            bodyColor: _ParticipantColors.cream,
+            displayColor: _ParticipantColors.cream,
+          ),
+          dialogTheme: const DialogThemeData(
+            backgroundColor: _ParticipantColors.field,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (pickedDate == null) return;
+
+    final day = pickedDate.day.toString().padLeft(2, '0');
+    final month = pickedDate.month.toString().padLeft(2, '0');
+    final year = pickedDate.year.toString();
+    _dateOfBirth.text = '$day/$month/$year';
   }
 
   @override
@@ -140,6 +194,18 @@ class _ParticipantFormState extends State<ParticipantForm> {
                         _Field(
                           label: 'Individual’s Name / Team Name',
                           controller: _directorName,
+                        ),
+                        SizedBox(height: 28 * scale),
+                        _Field(
+                          label: 'Date of Birth',
+                          controller: _dateOfBirth,
+                          readOnly: true,
+                          onTap: _pickDateOfBirth,
+                          suffixIcon: const Icon(
+                            Icons.calendar_month_rounded,
+                            color: _ParticipantColors.cream,
+                          ),
+                          validator: _validateDateOfBirth,
                         ),
                         SizedBox(height: 28 * scale),
                         _Field(
@@ -251,6 +317,9 @@ class _Field extends StatelessWidget {
     this.inputFormatters,
     this.validator,
     this.maxLines = 1,
+    this.readOnly = false,
+    this.onTap,
+    this.suffixIcon,
   });
   final String label;
   final TextEditingController controller;
@@ -259,6 +328,9 @@ class _Field extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
   final int maxLines;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final Widget? suffixIcon;
   @override
   Widget build(BuildContext context) {
     final scale = _formScale(context);
@@ -288,6 +360,8 @@ class _Field extends StatelessWidget {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
+          readOnly: readOnly,
+          onTap: onTap,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           validator:
@@ -310,6 +384,7 @@ class _Field extends StatelessWidget {
               horizontal: 16 * scale,
               vertical: 15 * scale,
             ),
+            suffixIcon: suffixIcon,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFF8D4B55)),
@@ -331,6 +406,24 @@ class _Field extends StatelessWidget {
       ],
     );
   }
+}
+
+String? _validateDateOfBirth(String? value) {
+  final raw = value?.trim() ?? '';
+  if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(raw)) {
+    return 'Select your date of birth';
+  }
+
+  final parts = raw.split('/');
+  final day = int.parse(parts[0]);
+  final month = int.parse(parts[1]);
+  final year = int.parse(parts[2]);
+  final date = DateTime(year, month, day);
+  final validDate = date.year == year && date.month == month && date.day == day;
+  if (!validDate || date.isAfter(DateTime.now())) {
+    return 'Enter a valid date of birth';
+  }
+  return null;
 }
 
 class _CategoryField extends StatelessWidget {

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 class OneActRegistration {
   const OneActRegistration({
     required this.directorName,
+    required this.dateOfBirth,
     required this.category,
     required this.amount,
     required this.school,
@@ -17,6 +18,7 @@ class OneActRegistration {
   });
 
   final String directorName;
+  final String dateOfBirth;
   final String category;
   final int amount;
   final String school;
@@ -33,7 +35,7 @@ class OneActSubmissionService {
   OneActSubmissionService._();
 
   static const _defaultGoogleAppsScriptUrl =
-      'https://script.google.com/macros/s/AKfycbzxZeYgeOEFu_wzFnjxAPbXge8WwFkx1kiTNq9_4yQbOzX-Q2dqQOHH_FBzDb9AhC51/exec';
+      'https://script.google.com/macros/s/AKfycbzUvv3F7B2Sj43Sj-oJ1Sh40ERbzUaTvULFybSY06rz1NKUy5JcDR7ZV3Kv8wHDzP8/exec';
   static const googleAppsScriptUrl = String.fromEnvironment(
     'GOOGLE_APPS_SCRIPT_URL',
     defaultValue: _defaultGoogleAppsScriptUrl,
@@ -50,6 +52,7 @@ class OneActSubmissionService {
         'formType': 'oneActPayment',
         'submittedAt': DateTime.now().toIso8601String(),
         'directorName': registration.directorName,
+        'dateOfBirth': registration.dateOfBirth,
         'category': registration.category,
         'amount': registration.amount.toString(),
         'school': registration.school,

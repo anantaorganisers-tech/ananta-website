@@ -114,6 +114,10 @@ class _PaydeskPageState extends State<PaydeskPage> {
           _isSubmitting = false;
         });
         await _showOneActConfirmation();
+        if (!mounted) return;
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/rangaksh', (route) => false);
       } else {
         final passIds = _generatePassIds(widget.visitor!.ticketCount);
         await VisitorPassSubmissionService.submitPayment(
@@ -191,7 +195,7 @@ class _PaydeskPageState extends State<PaydeskPage> {
         ),
       ),
       content: Text(
-        'Your Talent Hunt registration has been recorded and is pending approval.',
+        'Your application has been submitted. You will receive a confirmation email as soon as your payment is confirmed.',
         style: GoogleFonts.montserrat(
           color: _PaymentColors.cream.withValues(alpha: .84),
         ),

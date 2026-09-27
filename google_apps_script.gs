@@ -30,6 +30,7 @@ const APPLICATION_HEADERS = [
 const ONE_ACT_HEADERS = [
   'Submitted At',
   'Individual/Team Name',
+  'Date of Birth',
   'Team Size Category',
   'Performance Brief',
   'Previous Experiences',
@@ -189,7 +190,7 @@ function saveOneActPayment_(payload) {
 
   const sheet = getOrCreateSheet_(ONE_ACT_SHEET_NAME);
   ensureHeaders_(sheet, ONE_ACT_HEADERS);
-  if (findMatchingRow_(sheet, 14, payload.transactionId)) {
+  if (findMatchingRow_(sheet, 15, payload.transactionId)) {
     throw new Error('This transaction ID has already been recorded.');
   }
 
@@ -197,6 +198,7 @@ function saveOneActPayment_(payload) {
   sheet.appendRow([
     payload.submittedAt || recordedAt,
     payload.directorName || '',
+    payload.dateOfBirth || '',
     payload.category || '',
     payload.performanceBrief || '',
     payload.pastEvents || '',
@@ -411,6 +413,7 @@ function validateStallRequestPayload_(payload) {
 function validateOneActPayload_(payload) {
   [
     'directorName',
+    'dateOfBirth',
     'category',
     'amount',
     'school',
@@ -426,6 +429,10 @@ function validateOneActPayload_(payload) {
       throw new Error('Missing required field: ' + field);
     }
   });
+
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(String(payload.dateOfBirth))) {
+    throw new Error('Date of birth must be in DD/MM/YYYY format.');
+  }
 
   const expectedAmount = expectedTalentHuntAmount_(payload.category);
   const amount = Number(payload.amount);
