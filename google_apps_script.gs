@@ -517,6 +517,9 @@ function validateVisitorPassPayload_(payload) {
 function expectedVisitorPassAmount_(packageName, ticketCount, couponCode) {
   const normalizedPackage = String(packageName || '').toUpperCase();
   const normalizedCoupon = normalizeCouponCode_(couponCode);
+  const referralCouponApplied =
+    normalizedCoupon === VISITOR_DJ_GARBA_REFERRAL_COUPON ||
+    normalizedPackage.indexOf(VISITOR_DJ_GARBA_REFERRAL_COUPON) !== -1;
   const hasCompetition = normalizedPackage.indexOf('COMPETITION') !== -1;
   const hasDjGarba =
     normalizedPackage.indexOf('DJ') !== -1 ||
@@ -530,7 +533,7 @@ function expectedVisitorPassAmount_(packageName, ticketCount, couponCode) {
     perTicketAmount +=
       !hasCompetition && ticketCount >= VISITOR_DJ_GARBA_BULK_MIN_TICKETS
         ? VISITOR_DJ_GARBA_BULK_PRICE
-        : normalizedCoupon === VISITOR_DJ_GARBA_REFERRAL_COUPON
+        : referralCouponApplied
         ? VISITOR_DJ_GARBA_REFERRAL_PRICE
         : VISITOR_DJ_GARBA_PRICE;
   }

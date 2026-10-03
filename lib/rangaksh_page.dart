@@ -1957,6 +1957,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
     final selected = [
       if (_audienceEntry) 'COMPETITION AUDIENCE ENTRY',
       if (_djGarba) 'DJ AND GARBA NIGHT',
+      if (_djGarba && _referralCouponApplies) 'COUPON RANGAKSH200',
     ];
     return selected.join(' + ');
   }

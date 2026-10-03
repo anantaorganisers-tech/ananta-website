@@ -33,8 +33,10 @@ class MainApp extends StatelessWidget {
         product: PaydeskProduct.fromCode(browserUri.queryParameters['prod']),
       ),
       '/paymentgateway' => const PaydeskPage(product: PaydeskProduct.oneAct),
-      '/rangaksh/themes' => const RangakshPage(initialSection: 'themes'),
-      '/rangaksh' => const RangakshPage(),
+      '/rangaksh/themes' => const _RangakshTitle(
+        child: RangakshPage(initialSection: 'themes'),
+      ),
+      '/rangaksh' => const _RangakshTitle(child: RangakshPage()),
       '/secretariat' => const SecretariatApplicationFormScreen(),
       '/talent-hunt-form' => const ParticipantForm(),
       '/talent-hunt' => const OneActPage(),
@@ -57,8 +59,9 @@ class MainApp extends StatelessWidget {
       ),
       home: _StartupLoadingGate(child: homePage),
       routes: {
-        '/rangaksh': (_) => const RangakshPage(),
-        '/rangaksh/themes': (_) => const RangakshPage(initialSection: 'themes'),
+        '/rangaksh': (_) => const _RangakshTitle(child: RangakshPage()),
+        '/rangaksh/themes': (_) =>
+            const _RangakshTitle(child: RangakshPage(initialSection: 'themes')),
         '/secretariat': (_) => const SecretariatApplicationFormScreen(),
         '/talent-hunt-form': (_) => const ParticipantForm(),
         '/talent-hunt': (_) => const OneActPage(),
@@ -88,6 +91,19 @@ class MainApp extends StatelessWidget {
       },
     );
   }
+}
+
+class _RangakshTitle extends StatelessWidget {
+  const _RangakshTitle({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Title(
+    title: 'Rangaksh 2026- Ananta Organizers',
+    color: const Color(0xFF5A061F),
+    child: child,
+  );
 }
 
 class _StartupLoadingGate extends StatefulWidget {
