@@ -13,6 +13,7 @@ class VisitorPassRegistrant {
     required this.amount,
     required this.ticketCount,
     this.massBookingDiscountApplied = false,
+    this.couponCode = '',
   });
 
   final String name;
@@ -22,6 +23,7 @@ class VisitorPassRegistrant {
   final int amount;
   final int ticketCount;
   final bool massBookingDiscountApplied;
+  final String couponCode;
 }
 
 class VisitorPass {
@@ -48,6 +50,7 @@ class VisitorPassSubmissionService {
       'packageName': registrant.packageName,
       'amount': registrant.amount.toString(),
       'ticketCount': registrant.ticketCount.toString(),
+      'couponCode': registrant.couponCode,
       'upiId': upiId,
       'transactionId': transactionId,
       'passId': passIds.first,

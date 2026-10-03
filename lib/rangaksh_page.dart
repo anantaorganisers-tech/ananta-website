@@ -1934,6 +1934,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _ticketCount = TextEditingController(text: '1');
+  final _couponCode = TextEditingController();
   bool _audienceEntry = false;
   late bool _djGarba = widget.initialDjGarba;
 
@@ -1944,7 +1945,10 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
 
   bool get _djGarbaBulkDiscountApplies =>
       _djGarba && !_audienceEntry && _ticketCountValue >= 5;
-  int get _djGarbaPrice => _djGarbaBulkDiscountApplies ? 150 : 400;
+  bool get _referralCouponApplies =>
+      _couponCode.text.trim().toUpperCase() == 'RANGAKSH200';
+  int get _djGarbaPrice =>
+      _djGarbaBulkDiscountApplies ? 150 : (_referralCouponApplies ? 200 : 400);
   int get _packageSubtotal =>
       (_audienceEntry ? 80 : 0) + (_djGarba ? _djGarbaPrice : 0);
   int get _subtotal => _packageSubtotal * _ticketCountValue;
@@ -1961,6 +1965,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
   void initState() {
     super.initState();
     _ticketCount.addListener(_refreshSubtotal);
+    _couponCode.addListener(_refreshSubtotal);
   }
 
   @override
@@ -1969,6 +1974,9 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
     _email.dispose();
     _phone.dispose();
     _ticketCount
+      ..removeListener(_refreshSubtotal)
+      ..dispose();
+    _couponCode
       ..removeListener(_refreshSubtotal)
       ..dispose();
     super.dispose();
@@ -1996,6 +2004,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
         amount: _subtotal,
         ticketCount: _ticketCountValue,
         massBookingDiscountApplied: _djGarbaBulkDiscountApplies,
+        couponCode: _couponCode.text.trim().toUpperCase(),
       ),
     );
   }
@@ -2184,6 +2193,13 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
                               : 'Enter a ticket count between 1 and 20';
                         },
                       ),
+                      const SizedBox(height: 20),
+                      _TicketDialogField(
+                        label: 'ENTER COUPON CODE (OPTIONAL)',
+                        controller: _couponCode,
+                        textCapitalization: TextCapitalization.characters,
+                        validator: (_) => null,
+                      ),
                       if (_djGarbaBulkDiscountApplies) ...[
                         const SizedBox(height: 14),
                         _MassBookingDiscountNotice(mobile: mobile),
@@ -2244,6 +2260,7 @@ class _TicketDialogField extends StatelessWidget {
     required this.validator,
     this.keyboardType,
     this.inputFormatters,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final String label;
@@ -2251,6 +2268,7 @@ class _TicketDialogField extends StatelessWidget {
   final String? Function(String?) validator;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
+  final TextCapitalization textCapitalization;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -2269,6 +2287,7 @@ class _TicketDialogField extends StatelessWidget {
         controller: controller,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
+        textCapitalization: textCapitalization,
         validator: validator,
         style: GoogleFonts.montserrat(color: SiteColors.cream),
         decoration: InputDecoration(
