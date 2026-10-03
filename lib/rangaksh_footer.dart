@@ -14,7 +14,36 @@ class RangakshFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final mobile = width < 700;
-    final footerHeight = mobile ? 96.0 : 230.0;
+    final footerHeight = mobile ? 176.0 : 230.0;
+    if (mobile) {
+      return Container(
+        color: const Color(0xFF410F19),
+        width: double.infinity,
+        height: footerHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Image.asset(
+                'lib/assets/footer.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _RangakshFooterButtons(
+              mobile: true,
+              onRefund: () => _goTo(context, '/refund-policy'),
+              onHome: () => _goTo(context, '/'),
+              onTerms: () => _goTo(context, '/tos'),
+              onRangaksh: () => _goTo(context, '/rangaksh'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       color: const Color(0xFF410F19),
       width: double.infinity,
@@ -79,7 +108,7 @@ class _RangakshFooterButtons extends StatelessWidget {
 
     if (mobile) {
       return SizedBox(
-        width: 270,
+        width: 342,
         child: Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -116,7 +145,7 @@ class _RangakshFooterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 700;
     return SizedBox(
-      width: mobile ? 122 : (label.length > 18 ? 420 : 260),
+      width: mobile ? 160 : (label.length > 18 ? 420 : 260),
       height: mobile ? 28 : 54,
       child: OutlinedButton(
         onPressed: onTap,
@@ -134,7 +163,7 @@ class _RangakshFooterButton extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: GoogleFonts.montserrat(
-            fontSize: mobile ? 8.5 : 21,
+            fontSize: mobile ? 8.8 : 21,
             fontWeight: FontWeight.w400,
           ),
         ),

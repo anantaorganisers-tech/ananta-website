@@ -1729,7 +1729,7 @@ class _DjGarbaGlassPanel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '₹200 per person',
+          '₹400 per person',
           style: GoogleFonts.montserrat(
             color: SiteColors.cream,
             fontSize: mobile ? 15 : 19,
@@ -1827,7 +1827,7 @@ class _DjGarbaPassButton extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Secure your pass now at ₹200!',
+                    'Secure your pass now at ₹400!',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.montserrat(
@@ -1944,7 +1944,7 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
 
   bool get _djGarbaBulkDiscountApplies =>
       _djGarba && !_audienceEntry && _ticketCountValue >= 5;
-  int get _djGarbaPrice => _djGarbaBulkDiscountApplies ? 150 : 200;
+  int get _djGarbaPrice => _djGarbaBulkDiscountApplies ? 150 : 400;
   int get _packageSubtotal =>
       (_audienceEntry ? 80 : 0) + (_djGarba ? _djGarbaPrice : 0);
   int get _subtotal => _packageSubtotal * _ticketCountValue;
