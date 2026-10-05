@@ -606,7 +606,7 @@ class _MassBookingDiscountNotice extends StatelessWidget {
       border: Border.all(color: _PaymentColors.gold.withValues(alpha: .82)),
     ),
     child: Text(
-      'Mass Booking Discount applied! Tickets cost ₹150 per person',
+      'Mass Booking Discount applied! Tickets cost ₹350 per person',
       textAlign: TextAlign.center,
       style: GoogleFonts.montserrat(
         color: _PaymentColors.cream,

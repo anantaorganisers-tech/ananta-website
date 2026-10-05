@@ -1943,12 +1943,15 @@ class _TicketBookingDialogState extends State<_TicketBookingDialog> {
     return count == null || count < 1 ? 1 : count;
   }
 
-  bool get _djGarbaBulkDiscountApplies =>
-      _djGarba && !_audienceEntry && _ticketCountValue >= 5;
   bool get _referralCouponApplies =>
       _couponCode.text.trim().toUpperCase() == 'RANGAKSH200';
+  bool get _djGarbaBulkDiscountApplies =>
+      _djGarba &&
+      !_audienceEntry &&
+      !_referralCouponApplies &&
+      _ticketCountValue >= 5;
   int get _djGarbaPrice =>
-      _djGarbaBulkDiscountApplies ? 150 : (_referralCouponApplies ? 200 : 400);
+      _djGarbaBulkDiscountApplies ? 350 : (_referralCouponApplies ? 200 : 400);
   int get _packageSubtotal =>
       (_audienceEntry ? 80 : 0) + (_djGarba ? _djGarbaPrice : 0);
   int get _subtotal => _packageSubtotal * _ticketCountValue;
@@ -2421,7 +2424,7 @@ class _MassBookingDiscountNotice extends StatelessWidget {
       border: Border.all(color: SiteColors.gold.withValues(alpha: .82)),
     ),
     child: Text(
-      'Mass Booking Discount applied! Tickets cost ₹150 per person',
+      'Mass Booking Discount applied! Tickets cost ₹350 per person',
       textAlign: TextAlign.center,
       style: GoogleFonts.montserrat(
         color: SiteColors.cream,

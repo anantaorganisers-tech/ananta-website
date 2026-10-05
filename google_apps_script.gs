@@ -10,7 +10,7 @@ const MAX_QR_IMAGE_BYTES = 2 * 1024 * 1024;
 const VISITOR_AUDIENCE_PRICE = 80;
 const VISITOR_DJ_GARBA_PRICE = 400;
 const VISITOR_DJ_GARBA_REFERRAL_PRICE = 200;
-const VISITOR_DJ_GARBA_BULK_PRICE = 150;
+const VISITOR_DJ_GARBA_BULK_PRICE = 350;
 const VISITOR_DJ_GARBA_BULK_MIN_TICKETS = 5;
 const VISITOR_DJ_GARBA_REFERRAL_COUPON = 'RANGAKSH200';
 
@@ -531,10 +531,10 @@ function expectedVisitorPassAmount_(packageName, ticketCount, couponCode) {
   }
   if (hasDjGarba) {
     perTicketAmount +=
-      !hasCompetition && ticketCount >= VISITOR_DJ_GARBA_BULK_MIN_TICKETS
-        ? VISITOR_DJ_GARBA_BULK_PRICE
-        : referralCouponApplied
+      referralCouponApplied
         ? VISITOR_DJ_GARBA_REFERRAL_PRICE
+        : !hasCompetition && ticketCount >= VISITOR_DJ_GARBA_BULK_MIN_TICKETS
+        ? VISITOR_DJ_GARBA_BULK_PRICE
         : VISITOR_DJ_GARBA_PRICE;
   }
   if (perTicketAmount <= 0) {
