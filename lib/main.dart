@@ -1,5 +1,4 @@
 import 'package:ananta_website/ananta_page.dart';
-import 'package:ananta_website/participant_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -38,9 +37,9 @@ class MainApp extends StatelessWidget {
       ),
       '/rangaksh' => const _RangakshTitle(child: RangakshPage()),
       '/secretariat' => const SecretariatApplicationFormScreen(),
-      '/talent-hunt-form' => const ParticipantForm(),
+      '/talent-hunt-form' => const OneActPage(),
       '/talent-hunt' => const OneActPage(),
-      '/participant' => const ParticipantForm(),
+      '/participant' => const OneActPage(),
       '/one-act' => const OneActPage(),
       '/sponsor-form' => const SponsorshipForm(),
       '/stall-setup' => const StallSetupForm(),
@@ -63,9 +62,9 @@ class MainApp extends StatelessWidget {
         '/rangaksh/themes': (_) =>
             const _RangakshTitle(child: RangakshPage(initialSection: 'themes')),
         '/secretariat': (_) => const SecretariatApplicationFormScreen(),
-        '/talent-hunt-form': (_) => const ParticipantForm(),
+        '/talent-hunt-form': (_) => const OneActPage(),
         '/talent-hunt': (_) => const OneActPage(),
-        '/participant': (_) => const ParticipantForm(),
+        '/participant': (_) => const OneActPage(),
         '/one-act': (_) => const OneActPage(),
         '/sponsor-form': (_) => const SponsorshipForm(),
         '/stall-setup': (_) => const StallSetupForm(),
