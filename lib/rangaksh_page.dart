@@ -358,10 +358,6 @@ class _MobileHeroContent extends StatelessWidget {
                     onTap: onJoin,
                   ),
                   const SizedBox(width: 10),
-                  _CompactHeroButton(
-                    label: 'Join As Participant',
-                    onTap: () => openRouteInNewTab('/talent-hunt-form'),
-                  ),
                 ],
               ),
             ),
@@ -2539,11 +2535,6 @@ class JoinUsSection extends StatelessWidget {
             final cards = Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _JoinUsCard(
-                  title: 'Join As Participant',
-                  subtitle: 'Be a part of the Talent Hunt Contest',
-                  onTap: () => openRouteInNewTab('/talent-hunt-form'),
-                ),
                 const SizedBox(height: 14),
                 _JoinUsCard(
                   title: 'Join As Secretariat',
