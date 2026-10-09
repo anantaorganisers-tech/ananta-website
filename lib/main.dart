@@ -5,15 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:web/web.dart' as web;
 
 import 'one_act_page.dart';
-import 'one_act_submission.dart';
-import 'payment_gateway_page.dart';
 import 'rangaksh_page.dart';
 import 'refund_policy_page.dart';
-import 'sec_form.dart';
-import 'stall_setup_form.dart';
-import 'sponsorship_form.dart';
 import 'terms_of_service_page.dart';
-import 'visitor_pass_submission.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -28,17 +22,10 @@ class MainApp extends StatelessWidget {
     final browserUri = Uri.parse(web.window.location.href);
     final browserPath = browserUri.path;
     final homePage = switch (browserPath) {
-      '/paydesk' => PaydeskPage(
-        product: PaydeskProduct.fromCode(browserUri.queryParameters['prod']),
-      ),
-      '/paymentgateway' => const PaydeskPage(product: PaydeskProduct.oneAct),
       '/rangaksh/themes' => const _RangakshTitle(
         child: RangakshPage(initialSection: 'themes'),
       ),
       '/rangaksh' => const _RangakshTitle(child: RangakshPage()),
-      '/secretariat' => const SecretariatApplicationFormScreen(),
-      '/sponsor-form' => const SponsorshipForm(),
-      '/stall-setup' => const StallSetupForm(),
       '/talent-hunt' => const OneActPage(),
       '/one-act' => const OneActPage(),
       '/refund-policy' => const RefundPolicyPage(),
@@ -51,38 +38,18 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         textTheme: GoogleFonts.baloo2TextTheme(),
-        colorSchemeSeed: AppColors.textPrimary,
-        scaffoldBackgroundColor: AppColors.pageBackground,
+        colorSchemeSeed: const Color(0xFFFFF4DE),
+        scaffoldBackgroundColor: const Color(0xFF5A061F),
       ),
       home: _StartupLoadingGate(child: homePage),
       routes: {
         '/rangaksh': (_) => const _RangakshTitle(child: RangakshPage()),
         '/rangaksh/themes': (_) =>
             const _RangakshTitle(child: RangakshPage(initialSection: 'themes')),
-        '/secretariat': (_) => const SecretariatApplicationFormScreen(),
         '/talent-hunt': (_) => const OneActPage(),
         '/one-act': (_) => const OneActPage(),
-        '/sponsor-form': (_) => const SponsorshipForm(),
-        '/stall-setup': (_) => const StallSetupForm(),
         '/refund-policy': (_) => const RefundPolicyPage(),
         '/tos': (_) => const TermsOfServicePage(),
-        '/paydesk': (_) => const PaydeskPage(product: PaydeskProduct.oneAct),
-        '/paymentgateway': (_) =>
-            const PaydeskPage(product: PaydeskProduct.oneAct),
-      },
-      onGenerateRoute: (settings) {
-        final uri = Uri.tryParse(settings.name ?? '');
-        if (uri?.path != '/paydesk') return null;
-
-        final arguments = settings.arguments;
-        return MaterialPageRoute<void>(
-          settings: settings,
-          builder: (_) => PaydeskPage(
-            product: PaydeskProduct.fromCode(uri?.queryParameters['prod']),
-            registration: arguments is OneActRegistration ? arguments : null,
-            visitor: arguments is VisitorPassRegistrant ? arguments : null,
-          ),
-        );
       },
     );
   }

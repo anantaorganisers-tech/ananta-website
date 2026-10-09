@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'one_act_page.dart';
-import 'one_act_submission.dart';
 import 'rangaksh_footer.dart';
 
 class ParticipantForm extends StatefulWidget {
@@ -53,24 +52,10 @@ class _ParticipantFormState extends State<ParticipantForm> {
       return;
     }
 
-    final registration = OneActRegistration(
-      directorName: _directorName.text.trim(),
-      dateOfBirth: _dateOfBirth.text.trim(),
-      category: category,
-      amount: _TalentHuntCategory.amountFor(category),
-      school: _school.text.trim(),
-      contactNumber: _contact.text.trim(),
-      emailAddress: _email.text.trim(),
-      state: _state.text.trim(),
-      performanceBrief: _performanceBrief.text.trim(),
-      pastEvents: _pastEvents.text.trim(),
-      teamMembers: category,
-      referralName: _referral.text.trim(),
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Talent Hunt booking is currently closed.')),
     );
-
-    Navigator.of(
-      context,
-    ).pushNamed('/paydesk?prod=one-act', arguments: registration);
   }
 
   Future<void> _showAgeRestrictionDialog() => showDialog<void>(
@@ -557,40 +542,25 @@ class _CategoryField extends StatelessWidget {
 }
 
 class _TalentHuntCategory {
-  const _TalentHuntCategory({
-    required this.label,
-    required this.menuLabel,
-    required this.amount,
-  });
+  const _TalentHuntCategory({required this.label, required this.menuLabel});
 
   final String label;
   final String menuLabel;
-  final int amount;
 
   static const options = [
     _TalentHuntCategory(
       label: 'Solo/Duet Performance',
       menuLabel: 'Solo/Duet Performance - ₹200',
-      amount: 200,
     ),
     _TalentHuntCategory(
       label: '3-5 Participant Team Performance',
       menuLabel: '3-5 Participant Team Performance - ₹400',
-      amount: 400,
     ),
     _TalentHuntCategory(
       label: '5+ Participant Team Performance',
       menuLabel: '5+ Participant Team Performance - ₹800',
-      amount: 800,
     ),
   ];
-
-  static int amountFor(String label) => options
-      .firstWhere(
-        (option) => option.label == label,
-        orElse: () => throw ArgumentError('Unknown Talent Hunt category'),
-      )
-      .amount;
 }
 
 class _ResponsiveFieldRow extends StatelessWidget {
