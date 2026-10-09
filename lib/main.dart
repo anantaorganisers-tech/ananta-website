@@ -1,5 +1,4 @@
 import 'package:ananta_website/ananta_page.dart';
-import 'package:ananta_website/participant_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,9 +39,7 @@ class MainApp extends StatelessWidget {
       '/secretariat' => const SecretariatApplicationFormScreen(),
       '/sponsor-form' => const SponsorshipForm(),
       '/stall-setup' => const StallSetupForm(),
-      '/talent-hunt-form' => const ParticipantForm(),
       '/talent-hunt' => const OneActPage(),
-      '/participant' => const ParticipantForm(),
       '/one-act' => const OneActPage(),
       '/refund-policy' => const RefundPolicyPage(),
       '/tos' => const TermsOfServicePage(),
@@ -63,9 +60,7 @@ class MainApp extends StatelessWidget {
         '/rangaksh/themes': (_) =>
             const _RangakshTitle(child: RangakshPage(initialSection: 'themes')),
         '/secretariat': (_) => const SecretariatApplicationFormScreen(),
-        '/talent-hunt-form': (_) => const ParticipantForm(),
         '/talent-hunt': (_) => const OneActPage(),
-        '/participant': (_) => const ParticipantForm(),
         '/one-act': (_) => const OneActPage(),
         '/sponsor-form': (_) => const SponsorshipForm(),
         '/stall-setup': (_) => const StallSetupForm(),

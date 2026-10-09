@@ -16,8 +16,6 @@ class OneActPage extends StatelessWidget {
         child: Column(
           children: [
             _CompetitionContent(
-              onRegister: () =>
-                  Navigator.of(context).pushNamed('/talent-hunt-form'),
               onViewThemes: () =>
                   Navigator.of(context).pushNamed('/rangaksh/themes'),
             ),
@@ -179,12 +177,8 @@ class _AnimatedRangakshAppBarLogo extends StatelessWidget {
 }
 
 class _CompetitionContent extends StatelessWidget {
-  const _CompetitionContent({
-    required this.onRegister,
-    required this.onViewThemes,
-  });
+  const _CompetitionContent({required this.onViewThemes});
 
-  final VoidCallback onRegister;
   final VoidCallback onViewThemes;
 
   @override
@@ -231,7 +225,6 @@ class _CompetitionContent extends StatelessWidget {
                 spacing: 16,
                 runSpacing: 14,
                 children: [
-                  _RegisterButton(onTap: onRegister),
                   _RegisterButton(label: 'VIEW THEMES', onTap: onViewThemes),
                 ],
               ),

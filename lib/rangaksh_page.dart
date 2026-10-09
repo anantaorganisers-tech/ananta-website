@@ -494,11 +494,6 @@ class _HeroContent extends StatelessWidget {
                   ? Column(
                       children: [
                         _HeroButton(
-                          label: 'JOIN AS PARTICIPANT',
-                          onTap: () => openRouteInNewTab('/talent-hunt-form'),
-                        ),
-                        const SizedBox(height: 14),
-                        _HeroButton(
                           label: 'JOIN AS SECRETARIAT',
                           onTap: onJoin,
                         ),
@@ -524,10 +519,6 @@ class _HeroContent extends StatelessWidget {
                       spacing: 22,
                       runSpacing: 16,
                       children: [
-                        _HeroButton(
-                          label: 'JOIN AS PARTICIPANT',
-                          onTap: () => openRouteInNewTab('/talent-hunt-form'),
-                        ),
                         _HeroButton(
                           label: 'JOIN AS SECRETARIAT',
                           onTap: onJoin,
